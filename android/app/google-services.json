@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "30104908258",
+    "project_id": "depomla-app",
+    "storage_bucket": "depomla-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:30104908258:android:48abc98f9a8aea33bdc9bb",
+        "android_client_info": {
+          "package_name": "com.gorkem.depomla"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPkrVPC6mh_ZLh0IsNCCGnIj3jrGo8qXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
