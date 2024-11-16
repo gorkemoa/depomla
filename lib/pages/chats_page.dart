@@ -6,7 +6,9 @@ class ChatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('Sohbetler Yakında Eklenecek'),
+      child: Text('Sohbetler Yakında Eklenecek',style: TextStyle(
+        fontSize: 12,
+      )),
     );
   }
 }

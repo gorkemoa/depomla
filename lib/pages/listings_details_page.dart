@@ -1,177 +1,177 @@
 import 'package:flutter/material.dart';
 
-class ListingDetailPage extends StatelessWidget {
+class ListingDetailPage extends StatefulWidget {
+  final String listingId;
   final Map<String, dynamic> data;
 
-  const ListingDetailPage({super.key, required this.data});
+  const ListingDetailPage({
+    Key? key,
+    required this.listingId,
+    required this.data,
+  }) : super(key: key);
+
+  @override
+  State<ListingDetailPage> createState() => _ListingDetailPageState();
+}
+
+class _ListingDetailPageState extends State<ListingDetailPage> {
+  int _currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
-    final List<dynamic>? images = data['images'];
+    final List<dynamic>? images = widget.data['images'];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(data['title'] ?? 'Detaylar'),
+        backgroundColor: Colors.blue[700],
+        title: Text(
+          widget.data['title'] ?? 'Detaylar',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              // Paylaşma fonksiyonu
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () {
+              // Favorilere ekle
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Resim Galerisi
-              if (images != null && images.isNotEmpty)
-                SizedBox(
-                  height: 250,
-                  child: PageView.builder(
-                    itemCount: images.length,
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(16.0),
-                        child: Image.network(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Görsel Galerisi
+            if (images != null && images.isNotEmpty)
+              Column(
+                children: [
+                  SizedBox(
+                    height: 250,
+                    child: PageView.builder(
+                      itemCount: images.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        return Image.network(
                           images[index],
                           fit: BoxFit.cover,
                           width: double.infinity,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      images.length,
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentPage == index ? 12 : 8,
+                        height: _currentPage == index ? 12 : 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentPage == index
+                              ? Colors.blue[700]
+                              : Colors.grey,
                         ),
-                      );
-                    },
-                  ),
-                )
-              else
-                Container(
-                  height: 250,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.image,
-                      size: 60,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              // Başlık ve Fiyat
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      data['title'] ?? 'Başlık Yok',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    '${data['price'] ?? 0}₺',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.green,
                     ),
                   ),
                 ],
               ),
-              const Divider(height: 32, color: Colors.grey),
-              // Açıklama
-              Text(
-                'Açıklama:',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                data['description'] ?? 'Açıklama Yok',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              const Divider(height: 32, color: Colors.grey),
-              // Konum
-              if (data['location'] != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Konum:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Başlık ve Fiyat
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.data['title'] ?? 'Başlık Yok',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      data['location'],
-                      style: const TextStyle(
-                        fontSize: 16,
+                      Text(
+                        '${widget.data['price'] ?? 0}₺',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Colors.blue,
+                        ),
                       ),
-                    ),
-                    const Divider(height: 32, color: Colors.grey),
-                  ],
-                ),
-              // Tür
-              Text(
-                'Tür: ${data['type'] ?? 'Bilinmiyor'}',
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-              const Divider(height: 32, color: Colors.grey),
-              // Tarih Aralığı
-              if (data['available_from'] != null && data['available_until'] != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Mevcut Tarih:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${DateTime.fromMillisecondsSinceEpoch(data['available_from'].seconds * 1000).toLocal()} - '
-                      '${DateTime.fromMillisecondsSinceEpoch(data['available_until'].seconds * 1000).toLocal()}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 32),
-              // İletişim veya İşlem Butonları
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // İşlem veya iletişim
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('İletişime geçildi.')),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Açıklama
+                  Text(
+                    'Açıklama:',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
-                  child: const Text(
-                    'İletişime Geç',
-                    style: TextStyle(fontSize: 18),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.data['description'] ?? 'Açıklama Yok',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
+                  const Divider(height: 32),
+                  // Konum
+                  if (widget.data['location'] != null)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.data['location'],
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  const Divider(height: 32),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // İletişime geçme
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[700],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 16),
+                      ),
+                      child: const Text(
+                        'İletişime Geç',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
