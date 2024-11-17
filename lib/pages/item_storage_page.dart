@@ -89,8 +89,8 @@ class _ItemStoragePageState extends State<ItemStoragePage> {
           'created_at': Timestamp.now(),
         });
 
-        // `item_listings` koleksiyonuna ekle
-        await FirebaseFirestore.instance.collection('item_listings').doc(listingsRef.id).set({
+        // `item_storage` koleksiyonuna ekle
+        await FirebaseFirestore.instance.collection('item_storage').add({
           'listings_id': listingsRef.id,
           'description': _descriptionController.text.trim(),
           'created_at': Timestamp.now(),

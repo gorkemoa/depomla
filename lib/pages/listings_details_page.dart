@@ -1,31 +1,21 @@
 import 'package:flutter/material.dart';
 
-class ListingDetailPage extends StatefulWidget {
+class ListingDetailPage extends StatelessWidget {
   final String listingId;
   final Map<String, dynamic> data;
-
-  const ListingDetailPage({
-    Key? key,
-    required this.listingId,
-    required this.data,
-  }) : super(key: key);
-
-  @override
-  State<ListingDetailPage> createState() => _ListingDetailPageState();
-}
-
-class _ListingDetailPageState extends State<ListingDetailPage> {
-  int _currentPage = 0;
+  const ListingDetailPage(
+      {Key? key, required this.listingId, required this.data})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final List<dynamic>? images = widget.data['images'];
+    final List<dynamic>? images = data['images'];
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[700],
         title: Text(
-          widget.data['title'] ?? 'Detaylar',
+          data['title'] ?? 'Detaylar',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -49,45 +39,18 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
           children: [
             // Görsel Galerisi
             if (images != null && images.isNotEmpty)
-              Column(
-                children: [
-                  SizedBox(
-                    height: 250,
-                    child: PageView.builder(
-                      itemCount: images.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        return Image.network(
-                          images[index],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      images.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 12 : 8,
-                        height: _currentPage == index ? 12 : 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _currentPage == index
-                              ? Colors.blue[700]
-                              : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              SizedBox(
+                height: 250,
+                child: PageView.builder(
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    return Image.network(
+                      images[index],
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    );
+                  },
+                ),
               ),
             const SizedBox(height: 16),
             Padding(
@@ -101,7 +64,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                     children: [
                       Expanded(
                         child: Text(
-                          widget.data['title'] ?? 'Başlık Yok',
+                          data['title'] ?? 'Başlık Yok',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
@@ -109,7 +72,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                         ),
                       ),
                       Text(
-                        '${widget.data['price'] ?? 0}₺',
+                        '${data['price'] ?? 0}₺',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
@@ -129,7 +92,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    widget.data['description'] ?? 'Açıklama Yok',
+                    data['description'] ?? 'Açıklama Yok',
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -137,7 +100,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                   ),
                   const Divider(height: 32),
                   // Konum
-                  if (widget.data['location'] != null)
+                  if (data['location'] != null)
                     Row(
                       children: [
                         const Icon(
@@ -146,7 +109,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.data['location'],
+                          data['location'],
                           style: const TextStyle(fontSize: 16),
                         ),
                       ],

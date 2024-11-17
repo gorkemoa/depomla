@@ -1,8 +1,9 @@
+import 'package:depomla/pages/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'firebase_options.dart';
-import 'pages/home_page.dart';
+import 'firebase_options.dart';// Bu bir test değişikliğidir
+
 
 
 void main() async{
@@ -19,7 +20,7 @@ class Depola extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
      debugShowCheckedModeBanner: false,
-     home: HomePage(),
+     home: const LoginPage(),
     );
   }
 }
