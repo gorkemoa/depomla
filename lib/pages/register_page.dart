@@ -1,38 +1,30 @@
-// lib/login_page.dart
+// lib/register_page.dart
 import 'package:depomla/components/my_button.dart';
 import 'package:depomla/components/my_textfield.dart';
 import 'package:depomla/components/square_tile.dart';
 import 'package:depomla/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'homescreen.dart';
-import 'register_page.dart';
+import 'login_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   // Kontrolleri başlatma
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
 
-  // Giriş yapma fonksiyonu
-  Future<void> signInUser() async {
-    // Formun geçerli olup olmadığını kontrol etmek için
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
-      );
-      return;
-    }
-
-    // Giriş işlemi sırasında hata yönetimi
+  // Kayıt yapma fonksiyonu
+  Future<void> signUserUp() async {
+    // Kullanıcı kayıt sırasında bir hata ile karşılaşırsa
     try {
-      // Giriş işlemi başlamadan önce loading göstergesi
+      // Kayıt işlemi başlamadan önce loading göstergesi
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -45,19 +37,37 @@ class _LoginPageState extends State<LoginPage> {
         },
       );
 
-      // Kullanıcıyı Firebase Authentication ile giriş yaptırma
+      // Kullanıcıyı Firebase'e kaydetme
       UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
+          .createUserWithEmailAndPassword(
               email: emailController.text.trim(),
               password: passwordController.text.trim());
+
+      // Firestore'a ek bilgiler ekleyebilirsiniz (örn: kullanıcı adı)
+      // Örneğin:
+      /*
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'username': usernameController.text.trim(),
+        'email': emailController.text.trim(),
+        'created_at': Timestamp.now(),
+      });
+      */
 
       // Loading göstergesini kapatma
       Navigator.pop(context);
 
-      // Giriş başarılı, ana sayfaya yönlendir
+      // Başarı mesajı gösterme
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kayıt Başarılı!')),
+      );
+
+      // Kayıt sonrası yönlendirme (Giriş sayfası)
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Homescreen()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     } on FirebaseAuthException catch (e) {
       // Loading göstergesini kapatma
@@ -65,10 +75,10 @@ class _LoginPageState extends State<LoginPage> {
 
       // Hata mesajı gösterme
       String message = '';
-      if (e.code == 'user-not-found') {
-        message = 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Yanlış şifre girdiniz.';
+      if (e.code == 'weak-password') {
+        message = 'Şifre çok zayıf.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Bu e-posta zaten kullanımda.';
       } else {
         message = 'Bir hata oluştu. Lütfen tekrar deneyin.';
       }
@@ -101,6 +111,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    usernameController.dispose();
     super.dispose();
   }
 
@@ -118,8 +129,15 @@ class _LoginPageState extends State<LoginPage> {
                 // Logo
                 Image.asset(
                   'assets/depomla.png',
-                  width: 400, // Daha uygun bir genişlik
-                  height: 300, // Daha uygun bir yükseklik
+                  width: 200, // Daha uygun bir genişlik
+                  height: 100, // Daha uygun bir yükseklik
+                ),
+                const SizedBox(height: 20),
+                // Kullanıcı Adı Girişi
+                MyTextfield(
+                  controller: usernameController,
+                  hintText: 'Kullanıcı Adı',
+                  obscureText: false,
                 ),
                 const SizedBox(height: 20),
                 // E-posta Girişi
@@ -136,45 +154,10 @@ class _LoginPageState extends State<LoginPage> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 20),
-                // Şifremi Unuttum Butonu
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        print('Şifremi Unuttum butonuna basıldı');
-                        // Şifremi Unuttum işlevselliğini burada ekleyin
-                        // Örneğin, şifre sıfırlama e-postası gönderme
-                        FirebaseAuth.instance
-                            .sendPasswordResetEmail(
-                          email: emailController.text.trim(),
-                        )
-                            .then((_) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Şifre sıfırlama e-postası gönderildi.')),
-                          );
-                        }).catchError((error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text('Şifre sıfırlama başarısız: $error')),
-                          );
-                        });
-                      },
-                      child: Text(
-                        "Şifremi Unuttum",
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Giriş Yap Butonu
+                // Kayıt Ol Butonu
                 MyButton(
-                  onTap: signInUser,
-                  text: 'Giriş Yap',
+                  onTap: signUserUp,
+                  text: 'Üye Ol',
                   color: const Color(0xFF02aee7),
                   textStyle: const TextStyle(
                     color: Colors.white,
@@ -215,24 +198,29 @@ class _LoginPageState extends State<LoginPage> {
                     SquareTile(
                       imagePath: 'assets/google.png',
                       onTap: () async {
-                        final user = await AuthService().signInWithGoogle();
-                        if (user != null) {
-                          // Başarılı giriş sonrası HomeScreen'e yönlendirme
+                        try {
+                          await AuthService().signInWithGoogle();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Google ile giriş başarılı!')),
+                          );
+                          // Başarılı giriş sonrası yönlendirme
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>  Homescreen()),
+                                builder: (context) => const LoginPage()),
                           );
-                        } else {
-                          // Giriş iptal edildi veya başarısız oldu
+                        } catch (e) {
+                          // Hata durumunda mesaj gösterme
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                                 content:
-                                    Text('Giriş başarısız veya iptal edildi.')),
+                                    Text('Google ile giriş başarısız: $e')),
                           );
                         }
                       },
                     ),
+
                     const SizedBox(width: 20), // Butonlar arası boşluk
                     SquareTile(
                       imagePath: 'assets/apple.png',
@@ -241,7 +229,7 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Kayıt Sayfasına Yönlendirme
+                // Giriş Sayfasına Yönlendirme
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -252,11 +240,11 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const RegisterPage()),
+                              builder: (context) => const LoginPage()),
                         );
                       },
                       child: Text(
-                        'Üye Ol',
+                        'Giriş Yap',
                         style: TextStyle(
                             color: Colors.blue[900],
                             fontWeight: FontWeight.bold,

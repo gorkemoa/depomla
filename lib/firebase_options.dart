@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'depomla-app.firebasestorage.app',
     measurementId: 'G-DZ5F0SM769',
   );
+
 }
