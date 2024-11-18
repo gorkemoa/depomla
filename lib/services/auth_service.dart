@@ -30,4 +30,13 @@ class AuthService {
       rethrow;
     }
   }
+ Future<void> signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      print('Kullanıcı çıkış yaptı.');
+    } catch (e) {
+      print('Çıkış işlemi sırasında bir hata oluştu: $e');
+    }
+  }
+
 }

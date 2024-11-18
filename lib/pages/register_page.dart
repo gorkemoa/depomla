@@ -221,11 +221,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
 
-                    const SizedBox(width: 20), // Butonlar arası boşluk
-                    SquareTile(
-                      imagePath: 'assets/apple.png',
-                      onTap: signInWithApple,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 20),

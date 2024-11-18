@@ -2,9 +2,11 @@
 import 'package:depomla/components/my_button.dart';
 import 'package:depomla/components/my_textfield.dart';
 import 'package:depomla/components/square_tile.dart';
+import 'package:depomla/pages/home_page.dart';
 import 'package:depomla/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'forgot_password.dart';
 import 'homescreen.dart';
 import 'register_page.dart';
 
@@ -137,39 +139,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
                 // Şifremi Unuttum Butonu
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        print('Şifremi Unuttum butonuna basıldı');
-                        // Şifremi Unuttum işlevselliğini burada ekleyin
-                        // Örneğin, şifre sıfırlama e-postası gönderme
-                        FirebaseAuth.instance
-                            .sendPasswordResetEmail(
-                          email: emailController.text.trim(),
-                        )
-                            .then((_) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Şifre sıfırlama e-postası gönderildi.')),
-                          );
-                        }).catchError((error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text('Şifre sıfırlama başarısız: $error')),
-                          );
-                        });
-                      },
-                      child: Text(
-                        "Şifremi Unuttum",
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage()),
+                    );
+                  },
+                  child: Text(
+                    "Şifremi Unuttum",
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                 ),
+
                 const SizedBox(height: 20),
                 // Giriş Yap Butonu
                 MyButton(
@@ -220,8 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                           // Başarılı giriş sonrası HomeScreen'e yönlendirme
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) =>  Homescreen()),
+                            MaterialPageRoute(builder: (context) => HomePage()),
                           );
                         } else {
                           // Giriş iptal edildi veya başarısız oldu
@@ -232,11 +214,6 @@ class _LoginPageState extends State<LoginPage> {
                           );
                         }
                       },
-                    ),
-                    const SizedBox(width: 20), // Butonlar arası boşluk
-                    SquareTile(
-                      imagePath: 'assets/apple.png',
-                      onTap: signInWithApple,
                     ),
                   ],
                 ),

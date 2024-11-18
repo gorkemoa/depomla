@@ -1,8 +1,11 @@
 // lib/listings_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 import 'listings_details_page.dart';
 import 'package:intl/intl.dart';
+
+import 'login_page.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
@@ -416,11 +419,30 @@ class _ListingsPageState extends State<ListingsPage> {
     );
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
+      appBar: AppBar(actions: [IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              // Çıkış işlemi
+              await AuthService().signOut();
+
+              // Çıkış yaptıktan sonra LoginPage'e yönlendirme
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false, // Tüm önceki rotaları kaldır
+              );
+            },
+          ),
+                    IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _openFilterPanel,
+          ),],
         title: const Text(
           'İlanlar',
           style: TextStyle(
@@ -431,12 +453,7 @@ class _ListingsPageState extends State<ListingsPage> {
         backgroundColor: const Color(0xFF02aee7),
         elevation: 0,
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: _openFilterPanel,
-          ),
-        ],
+    
       ),
       body: RefreshIndicator(
         onRefresh: () async {
