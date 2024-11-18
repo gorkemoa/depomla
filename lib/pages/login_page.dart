@@ -3,12 +3,13 @@ import 'package:depomla/components/my_button.dart';
 import 'package:depomla/components/my_textfield.dart';
 import 'package:depomla/components/square_tile.dart';
 import 'package:depomla/pages/home_page.dart';
+import 'package:depomla/pages/profile_page.dart';
 import 'package:depomla/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'forgot_password.dart';
-import 'homescreen.dart';
 import 'register_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore importu ekleyin
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   // Kontrolleri başlatma
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService(); // AuthService örneği
 
   // Giriş yapma fonksiyonu
   Future<void> signInUser() async {
@@ -53,13 +56,20 @@ class _LoginPageState extends State<LoginPage> {
               email: emailController.text.trim(),
               password: passwordController.text.trim());
 
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // Firestore'da lastSignIn güncelleme
+        await _authService.updateLastSignIn(user.uid);
+      }
+
       // Loading göstergesini kapatma
       Navigator.pop(context);
 
       // Giriş başarılı, ana sayfaya yönlendir
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Homescreen()),
+        MaterialPageRoute(builder: (context) => HomePage()),
       );
     } on FirebaseAuthException catch (e) {
       // Loading göstergesini kapatma
@@ -200,7 +210,10 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () async {
                         final user = await AuthService().signInWithGoogle();
                         if (user != null) {
-                          // Başarılı giriş sonrası HomeScreen'e yönlendirme
+                          // Firestore'da lastSignIn güncelleme
+                          await AuthService().updateLastSignIn(user.uid);
+
+                          // Başarılı giriş sonrası ProfilSayfasi'na yönlendirme
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (context) => HomePage()),

@@ -1,10 +1,9 @@
-// lib/listings_page.dart
+// Gerekli paketleri ekleyin
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import 'listings_details_page.dart';
 import 'package:intl/intl.dart';
-
 import 'login_page.dart';
 
 class ListingsPage extends StatefulWidget {
@@ -18,9 +17,27 @@ class _ListingsPageState extends State<ListingsPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchTerm = '';
 
+  // Yeni eklenen değişkenler
+  String _selectedCategory = 'Tümü';
+  double _searchRadius = 50; // Kilometre cinsinden arama yarıçapı
+  List<String> _favoriteListings = []; // Favori ilanların ID'leri
+
+  // Kategoriler listesi
+  final List<String> _categories = [
+    'Tümü',
+    
+  ];
+
   // Filtreleme için güncellenmiş değişkenler
   String _sortOption = 'Fiyat: Düşük - Yüksek'; // Varsayılan sıralama seçeneği
-  RangeValues _priceRange = const RangeValues(0, 10000); // Örneğin fiyat aralığı
+  RangeValues _priceRange = const RangeValues(0, 10000); // Fiyat aralığı
+
+  @override
+  void initState() {
+    super.initState();
+    // Favori ilanları yükle (Eğer kullanıcı oturum açtıysa)
+    _loadFavoriteListings();
+  }
 
   @override
   void dispose() {
@@ -28,15 +45,21 @@ class _ListingsPageState extends State<ListingsPage> {
     super.dispose();
   }
 
+  
+
   // Firestore sorgusunu oluşturma
   Query _buildQuery() {
     Query query = FirebaseFirestore.instance.collection('listings');
 
+    // Kategori filtresi
+    if (_selectedCategory != 'Tümü') {
+      query = query.where('category', isEqualTo: _selectedCategory);
+    }
+
     // Arama terimini uygulama
     if (_searchTerm.isNotEmpty) {
       query = query
-          .where('title', isGreaterThanOrEqualTo: _searchTerm)
-          .where('title', isLessThanOrEqualTo: '$_searchTerm\uf8ff');
+          .where('search_keywords', arrayContains: _searchTerm.toLowerCase());
     }
 
     // Fiyat aralığını uygulama
@@ -55,6 +78,7 @@ class _ListingsPageState extends State<ListingsPage> {
       default:
         query = query.orderBy('price', descending: false);
     }
+
 
     return query;
   }
@@ -86,6 +110,28 @@ class _ListingsPageState extends State<ListingsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Kategori Seçimi
+                DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Kategori',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _categories.map((category) {
+                    return DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
                 // Sıralama Seçeneği
                 DropdownButtonFormField<String>(
                   value: _sortOption,
@@ -143,7 +189,6 @@ class _ListingsPageState extends State<ListingsPage> {
                     Navigator.pop(context);
                     setState(() {}); // Filtreleri uygula
                   },
-                  child: const Text('Uygula'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF02aee7),
                     minimumSize: const Size.fromHeight(50),
@@ -151,6 +196,7 @@ class _ListingsPageState extends State<ListingsPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: const Text('Uygula'),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -161,14 +207,29 @@ class _ListingsPageState extends State<ListingsPage> {
     );
   }
 
+  // Favori ilanları yükleme fonksiyonu
+  void _loadFavoriteListings() async {
+    // Burada favori ilanları Firestore'dan veya başka bir kaynaktan yükleyebilirsiniz
+    // Örneğin:
+    /*
+    final userId = AuthService().currentUser?.uid;
+    if (userId != null) {
+      final favsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .get();
+      setState(() {
+        _favoriteListings = favsSnapshot.docs.map((doc) => doc.id).toList();
+      });
+    }
+    */
+  }
+
   // İlan kartlarını oluşturma
   Widget _buildListingsGrid(List<QueryDocumentSnapshot> listings) {
     // Eğer arama terimi varsa, listeyi filtrele
-    List<QueryDocumentSnapshot> filteredListings = listings.where((doc) {
-      if (_searchTerm.isEmpty) return true;
-      String title = (doc['title'] ?? '').toString().toLowerCase();
-      return title.contains(_searchTerm);
-    }).toList();
+    List<QueryDocumentSnapshot> filteredListings = listings;
 
     return SliverPadding(
       padding: const EdgeInsets.all(16.0),
@@ -178,6 +239,9 @@ class _ListingsPageState extends State<ListingsPage> {
             final data =
                 filteredListings[index].data() as Map<String, dynamic>;
             final List<dynamic>? images = data['images'];
+            final listingId = filteredListings[index].id;
+
+            bool isFavorite = _favoriteListings.contains(listingId);
 
             return GestureDetector(
               onTap: () {
@@ -188,16 +252,16 @@ class _ListingsPageState extends State<ListingsPage> {
                         (context, animation, secondaryAnimation) =>
                             ListingDetailPage(
                       data: data,
-                      listingId: filteredListings[index].id,
+                      listingId: listingId,
                     ),
-                    transitionsBuilder: (context, animation,
-                        secondaryAnimation, child) {
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
                       const begin = Offset(0.0, 1.0);
                       const end = Offset.zero;
                       const curve = Curves.ease;
 
-                      var tween =
-                          Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                      var tween = Tween(begin: begin, end: end)
+                          .chain(CurveTween(curve: curve));
 
                       return SlideTransition(
                         position: animation.drive(tween),
@@ -207,131 +271,160 @@ class _ListingsPageState extends State<ListingsPage> {
                   ),
                 );
               },
-              child: Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                shadowColor: const Color(0xFF1f4985).withOpacity(0.3),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // İlan Görseli
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20.0),
-                        ),
-                        child: images != null && images.isNotEmpty
-                            ? Image.network(
-                                images.first,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                loadingBuilder:
-                                    (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      color: const Color(0xFF02aee7),
-                                    ),
-                                  );
-                                },
-                                errorBuilder:
-                                    (context, error, stackTrace) {
-                                  return Container(
+              child: Stack(
+                children: [
+                  Card(
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    shadowColor: const Color(0xFF1f4985).withOpacity(0.3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // İlan Görseli
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(20.0),
+                            ),
+                            child: images != null && images.isNotEmpty
+                                ? Image.network(
+                                    images.first,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    loadingBuilder:
+                                        (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          color: const Color(0xFF02aee7),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder:
+                                        (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[300],
+                                        child: const Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
                                     color: Colors.grey[300],
                                     child: const Icon(
-                                      Icons.broken_image,
+                                      Icons.image_not_supported,
                                       size: 50,
                                       color: Colors.grey,
                                     ),
-                                  );
-                                },
-                              )
-                            : Container(
-                                color: Colors.grey[300],
-                                child: const Icon(
-                                  Icons.image_not_supported,
-                                  size: 50,
-                                  color: Colors.grey,
+                                  ),
+                          ),
+                        ),
+                        // İlan Bilgileri
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['title'] ?? 'Başlık Yok',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${data['price'] ?? 0}₺',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF02aee7),
+                                  fontSize: 16,
                                 ),
                               ),
-                      ),
-                    ),
-                    // İlan Bilgileri
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data['title'] ?? 'Başlık Yok',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${data['price'] ?? 0}₺',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF02aee7),
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  data['location'] ?? 'Konum Yok',
-                                  style: const TextStyle(
-                                    fontSize: 12,
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    size: 14,
                                     color: Colors.grey,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      data['location'] ?? 'Konum Yok',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    data['created_at'] != null
+                                        ? DateFormat('yyyy-MM-dd').format(
+                                            (data['created_at'] as Timestamp)
+                                                .toDate())
+                                        : 'Tarih Yok',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                data['created_at'] != null
-                                    ? DateFormat('yyyy-MM-dd').format(
-                                        (data['created_at'] as Timestamp)
-                                            .toDate())
-                                    : 'Tarih Yok',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  // Favori Butonu
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        // Favorilere ekleme veya çıkarma işlemi
+                        setState(() {
+                          if (isFavorite) {
+                            _favoriteListings.remove(listingId);
+                            // Favorilerden kaldırma işlemi (Firestore'da da güncelle)
+                          } else {
+                            _favoriteListings.add(listingId);
+                            // Favorilere ekleme işlemi (Firestore'da da güncelle)
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -403,8 +496,8 @@ class _ListingsPageState extends State<ListingsPage> {
                   SizedBox(height: 16),
                   Text(
                     'İlan bulunamadı.',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w500),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -419,13 +512,13 @@ class _ListingsPageState extends State<ListingsPage> {
     );
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(actions: [IconButton(
+      appBar: AppBar(
+        actions: [
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               // Çıkış işlemi
@@ -439,10 +532,11 @@ class _ListingsPageState extends State<ListingsPage> {
               );
             },
           ),
-                    IconButton(
+          IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
             onPressed: _openFilterPanel,
-          ),],
+          ),
+        ],
         title: const Text(
           'İlanlar',
           style: TextStyle(
@@ -453,7 +547,6 @@ class _ListingsPageState extends State<ListingsPage> {
         backgroundColor: const Color(0xFF02aee7),
         elevation: 0,
         centerTitle: true,
-    
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -461,7 +554,38 @@ class _ListingsPageState extends State<ListingsPage> {
         },
         child: CustomScrollView(
           slivers: [
-            
+            // Kategori seçimi için ek alan
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    children: _categories.map((category) {
+                      bool isSelected = _selectedCategory == category;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(category),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          },
+                          selectedColor: const Color(0xFF02aee7),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
             SliverAppBar(
               floating: true,
               backgroundColor: Colors.grey[100],
@@ -482,12 +606,10 @@ class _ListingsPageState extends State<ListingsPage> {
                 },
               ),
             ),
-            
             _buildBody(),
           ],
         ),
       ),
-   
     );
   }
 }

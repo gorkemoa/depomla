@@ -1,4 +1,5 @@
 import 'package:depomla/pages/category_selection_page.dart';
+import 'package:depomla/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'listings_page.dart';
@@ -16,8 +17,9 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const ListingsPage(), // İlanları listeleyen sayfa
-    const ChatsPage(),    // Sohbetler sayfası
+    const ChatsPage(), // Sohbetler sayfası
     const CategorySelectionPage(), // İlan ekleme sayfası
+    const ProfilSayfasi(),
   ];
 
   @override
@@ -39,6 +41,7 @@ class _HomePageState extends State<HomePage> {
             TabItem(icon: Icons.home, title: 'Anasayfa'),
             TabItem(icon: Icons.chat, title: 'Sohbetler'),
             TabItem(icon: Icons.storage, title: 'Depola'),
+            TabItem(icon: Icons.storage, title: 'Profilim'),
           ],
           initialActiveIndex: _selectedIndex,
           onTap: (int index) {

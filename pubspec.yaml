@@ -45,6 +45,7 @@ dependencies:
   rxdart:
   firebase_auth: ^5.3.3
   google_sign_in:
+  geolocator: ^13.0.2
 
 dev_dependencies:
   flutter_launcher_icons: 
@@ -73,6 +74,8 @@ flutter:
     - assets/google.png
     - assets/apple.png
     - assets/depomla.png
+    - assets/default_avatar.png
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

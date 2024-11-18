@@ -1,10 +1,12 @@
-// lib/register_page.dart
-import 'package:depomla/components/my_button.dart';
-import 'package:depomla/components/my_textfield.dart';
-import 'package:depomla/components/square_tile.dart';
-import 'package:depomla/services/auth_service.dart';
+import 'package:depomla/pages/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:depomla/services/auth_service.dart';
+import 'package:depomla/pages/home_page.dart';
+import 'package:depomla/components/my_button.dart';
+import 'package:depomla/components/my_textfield.dart';
+
+import '../components/square_tile.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -18,11 +20,22 @@ class _RegisterPageState extends State<RegisterPage> {
   // Kontrolleri başlatma
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController displayNameController = TextEditingController();
 
-  // Kayıt yapma fonksiyonu
-  Future<void> signUserUp() async {
-    // Kullanıcı kayıt sırasında bir hata ile karşılaşırsa
+  // Kayıt olma fonksiyonu
+  Future<void> signUpUser() async {
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+    String displayName = displayNameController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || displayName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
+      );
+      return;
+    }
+
+    // Kayıt işlemi sırasında hata yönetimi
     try {
       // Kayıt işlemi başlamadan önce loading göstergesi
       showDialog(
@@ -37,81 +50,44 @@ class _RegisterPageState extends State<RegisterPage> {
         },
       );
 
-      // Kullanıcıyı Firebase'e kaydetme
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: emailController.text.trim(),
-              password: passwordController.text.trim());
-
-      // Firestore'a ek bilgiler ekleyebilirsiniz (örn: kullanıcı adı)
-      // Örneğin:
-      /*
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'username': usernameController.text.trim(),
-        'email': emailController.text.trim(),
-        'created_at': Timestamp.now(),
-      });
-      */
+      // AuthService kullanarak kullanıcıyı kaydet
+      User? user = await AuthService().signUpWithEmailAndPassword(
+        email,
+        password,
+        displayName,
+      );
 
       // Loading göstergesini kapatma
       Navigator.pop(context);
 
-      // Başarı mesajı gösterme
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt Başarılı!')),
-      );
-
-      // Kayıt sonrası yönlendirme (Giriş sayfası)
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    } on FirebaseAuthException catch (e) {
-      // Loading göstergesini kapatma
-      Navigator.pop(context);
-
-      // Hata mesajı gösterme
-      String message = '';
-      if (e.code == 'weak-password') {
-        message = 'Şifre çok zayıf.';
-      } else if (e.code == 'email-already-in-use') {
-        message = 'Bu e-posta zaten kullanımda.';
+      if (user != null) {
+        // Kayıt başarılı, ana sayfaya yönlendir
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
       } else {
-        message = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+        // Kayıt başarısız
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kayıt olma işlemi başarısız oldu.')),
+        );
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
     } catch (e) {
       // Loading göstergesini kapatma
       Navigator.pop(context);
 
-      // Genel hata mesajı gösterme
+      // Hata mesajı gösterme
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bir hata oluştu.')),
+        SnackBar(content: Text('Hata: $e')),
       );
     }
-  }
-
-  void signInWithGoogle() {
-    print('Google ile giriş yapılıyor...');
-    // Google sign-in işlevselliğini burada ekleyin
-  }
-
-  void signInWithApple() {
-    print('Apple ile giriş yapılıyor...');
-    // Apple sign-in işlevselliğini burada ekleyin
   }
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    usernameController.dispose();
+    displayNameController.dispose();
     super.dispose();
   }
 
@@ -129,13 +105,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 // Logo
                 Image.asset(
                   'assets/depomla.png',
-                  width: 200, // Daha uygun bir genişlik
-                  height: 100, // Daha uygun bir yükseklik
+                  width: 400,
+                  height: 300,
                 ),
                 const SizedBox(height: 20),
                 // Kullanıcı Adı Girişi
                 MyTextfield(
-                  controller: usernameController,
+                  controller: displayNameController,
                   hintText: 'Kullanıcı Adı',
                   obscureText: false,
                 ),
@@ -156,8 +132,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 20),
                 // Kayıt Ol Butonu
                 MyButton(
-                  onTap: signUserUp,
-                  text: 'Üye Ol',
+                  onTap: signUpUser,
+                  text: 'Kayıt Ol',
                   color: const Color(0xFF02aee7),
                   textStyle: const TextStyle(
                     color: Colors.white,
@@ -191,36 +167,29 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Sosyal Giriş Butonları
+                // Sosyal Giriş Butonları (Google, Apple vb.)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Google ile Kayıt Ol
                     SquareTile(
                       imagePath: 'assets/google.png',
                       onTap: () async {
-                        try {
-                          await AuthService().signInWithGoogle();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Google ile giriş başarılı!')),
-                          );
-                          // Başarılı giriş sonrası yönlendirme
+                        User? user = await AuthService().signInWithGoogle();
+                        if (user != null) {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => const LoginPage()),
+                            MaterialPageRoute(builder: (context) => const HomePage()),
                           );
-                        } catch (e) {
-                          // Hata durumunda mesaj gösterme
+                        } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text('Google ile giriş başarısız: $e')),
+                            const SnackBar(
+                                content: Text('Giriş başarısız veya iptal edildi.')),
                           );
                         }
                       },
                     ),
-
+                    // Diğer sosyal giriş butonları ekleyebilirsiniz
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -234,16 +203,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       onTap: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginPage()),
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
                         );
                       },
                       child: Text(
                         'Giriş Yap',
                         style: TextStyle(
-                            color: Colors.blue[900],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15),
+                          color: Colors.blue[900],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ],
