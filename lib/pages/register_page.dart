@@ -1,4 +1,3 @@
-import 'package:depomla/pages/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:depomla/services/auth_service.dart';

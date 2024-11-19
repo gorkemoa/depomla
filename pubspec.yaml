@@ -45,8 +45,7 @@ dependencies:
   rxdart:
   firebase_auth: ^5.3.3
   google_sign_in:
-  geolocator: ^13.0.2
-
+  provider: 
 dev_dependencies:
   flutter_launcher_icons: 
 

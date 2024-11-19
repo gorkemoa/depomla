@@ -1,9 +1,10 @@
-import 'package:depomla/pages/category_selection_page.dart';
+// lib/pages/home_page.dart
+
+import 'package:depomla/pages/add_listing_page.dart';
 import 'package:depomla/pages/profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'listings_page.dart';
-import 'chats_page.dart';
+import 'chats_page.dart'; // Doğru şekilde ChatsPage'i import edin
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,39 +18,44 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const ListingsPage(), // İlanları listeleyen sayfa
-    const ChatsPage(), // Sohbetler sayfası
-    const CategorySelectionPage(), // İlan ekleme sayfası
-    const ProfilSayfasi(),
+    ChatsPage(),          // Sohbetleri listeleyen sayfa
+    const AddListingPage(), // İlan ekleme sayfası
+    const ProfilePage(),    // Profil sayfası
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedIndex],
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          iconTheme: const IconThemeData(size: 24), // İkon boyutunu ayarlar
-          textTheme: const TextTheme(
-            bodySmall: TextStyle(fontSize: 12), // Yazı tipi boyutunu ayarlar
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Ensure all items are visible
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color.fromARGB(255, 35, 68, 152),
+        unselectedItemColor: Colors.grey,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Ana Sayfa',
           ),
-        ),
-        child: ConvexAppBar(
-          style: TabStyle.react,
-          height: 50.0, // Yüksekliği küçülttük
-          backgroundColor: Colors.blueAccent,
-          items: const [
-            TabItem(icon: Icons.home, title: 'Anasayfa'),
-            TabItem(icon: Icons.chat, title: 'Sohbetler'),
-            TabItem(icon: Icons.storage, title: 'Depola'),
-            TabItem(icon: Icons.storage, title: 'Profilim'),
-          ],
-          initialActiveIndex: _selectedIndex,
-          onTap: (int index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Sohbetler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.storage),
+            label: 'Depola',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profilim',
+          ),
+        ],
       ),
     );
   }

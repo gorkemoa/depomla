@@ -1,21 +1,13 @@
+// lib/services/auth_service.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  
-  Future<void> signOut() async {
-    try {
-      await GoogleSignIn().signOut(); // Google hesabını temizle
-      await _auth.signOut(); // Firebase oturumunu kapat
-      print('Kullanıcı çıkış yaptı.');
-    } catch (e) {
-      print('Çıkış işlemi sırasında bir hata oluştu: $e');
-    }
-  }
 
   // Kullanıcı durum değişikliklerini dinle
   Stream<User?> authStateChanges() {
@@ -24,49 +16,7 @@ class AuthService {
 
   // Mevcut kullanıcıyı al
   Future<User?> getCurrentUser() async {
-    try {
-      User? user = _auth.currentUser;
-
-      if (user != null) {
-        print('Kullanıcı giriş yapmış: ${user.uid}');
-        return user; // Kullanıcı objesini döner
-      } else {
-        print('Kullanıcı giriş yapmamış.');
-        return null; // Giriş yapmamış kullanıcı
-      }
-    } catch (e) {
-      print('Mevcut kullanıcı bilgisi alınırken hata oluştu: $e');
-      return null;
-    }
-  }
-
-  // Kullanıcıyı Firestore'dan getir (Opsiyonel)
-  Future<DocumentSnapshot<Map<String, dynamic>>?> getUserFromFirestore(String uid) async {
-    try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      if (doc.exists) {
-        print('Kullanıcı Firestore\'dan alındı: ${doc.data()}');
-        return doc;
-      } else {
-        print('Kullanıcı Firestore\'da bulunamadı.');
-        return null;
-      }
-    } catch (e) {
-      print('Firestore\'dan kullanıcı alınırken hata oluştu: $e');
-      return null;
-    }
-  }
-    
-  
- Future<void> updateLastSignIn(String uid) async {
-    try {
-      await _firestore.collection('users').doc(uid).update({
-        'lastSignIn': FieldValue.serverTimestamp(),
-      });
-      print('lastSignIn güncellendi.');
-    } catch (e) {
-      print('lastSignIn güncellenirken hata: $e');
-    }
+    return _auth.currentUser;
   }
 
   // E-posta ve Şifre ile Kayıt Olma
@@ -86,11 +36,43 @@ class AuthService {
         user = _auth.currentUser;
 
         // Firestore'a kullanıcı ekleme
-        await _firestore.collection('users').doc(user!.uid).set({
-          'uid': user.uid,
-          'email': user.email,
-          'displayName': displayName,
-          'createdAt': FieldValue.serverTimestamp(),
+        UserModel newUser = UserModel(
+          uid: user!.uid,
+          email: user.email!,
+          displayName: displayName,
+          photoURL: user.photoURL ?? '',
+          lastSignIn: FieldValue.serverTimestamp() as Timestamp?,
+        );
+
+        await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
+      }
+
+      return user;
+    } on FirebaseAuthException catch (e) {
+      // Hata yönetimi
+      print('FirebaseAuthException: ${e.message}');
+      rethrow;
+    } catch (e) {
+      // Genel hata yönetimi
+      print('Exception: $e');
+      rethrow;
+    }
+  }
+
+  // E-posta ve Şifre ile Giriş Yapma
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      UserCredential credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = credential.user;
+
+      if (user != null) {
+        // Firestore'da lastSignIn güncelle
+        await _firestore.collection('users').doc(user.uid).update({
+          'lastSignIn': FieldValue.serverTimestamp(),
         });
       }
 
@@ -98,11 +80,11 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       // Hata yönetimi
       print('FirebaseAuthException: ${e.message}');
-      return null;
+      rethrow;
     } catch (e) {
       // Genel hata yönetimi
       print('Exception: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -128,33 +110,60 @@ class AuthService {
 
       if (user != null) {
         // Firestore'da kullanıcı mevcut değilse ekle
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+        DocumentSnapshot<Map<String, dynamic>> userDoc = await _firestore.collection('users').doc(user.uid).get();
 
         if (!userDoc.exists) {
-          await _firestore.collection('users').doc(user.uid).set({
-            'uid': user.uid,
-            'email': user.email,
-            'displayName': user.displayName ?? '',
-            'photoURL': user.photoURL ?? '',
-            'createdAt': FieldValue.serverTimestamp(),
+          UserModel newUser = UserModel(
+            uid: user.uid,
+            email: user.email!,
+            displayName: user.displayName ?? '',
+            photoURL: user.photoURL ?? '',
+            lastSignIn: FieldValue.serverTimestamp() as Timestamp?,
+          );
+
+          await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
+        } else {
+          // Mevcut kullanıcının lastSignIn alanını güncelle
+          await _firestore.collection('users').doc(user.uid).update({
+            'lastSignIn': FieldValue.serverTimestamp(),
           });
         }
-
-        // lastSignIn güncelleme
-        await updateLastSignIn(user.uid);
       }
 
       return user;
     } on FirebaseAuthException catch (e) {
       // Hata yönetimi
       print('FirebaseAuthException: ${e.message}');
-      return null;
+      rethrow;
     } catch (e) {
       // Genel hata yönetimi
       print('Exception: $e');
-      return null;
+      rethrow;
     }
   }
 
-  // Diğer Auth metodları...
+  // Çıkış yap
+  Future<void> signOut() async {
+    try {
+      await GoogleSignIn().signOut(); // Google hesabını temizle
+      await _auth.signOut(); // Firebase oturumunu kapat
+      print('Kullanıcı çıkış yaptı.');
+    } catch (e) {
+      print('Çıkış işlemi sırasında bir hata oluştu: $e');
+      rethrow;
+    }
+  }
+
+  // Firestore'da lastSignIn güncelleme
+  Future<void> updateLastSignIn(String uid) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'lastSignIn': FieldValue.serverTimestamp(),
+      });
+      print('lastSignIn güncellendi.');
+    } catch (e) {
+      print('lastSignIn güncellenirken hata: $e');
+      rethrow;
+    }
+  }
 }
