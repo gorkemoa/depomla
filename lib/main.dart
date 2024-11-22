@@ -1,5 +1,7 @@
 // lib/main.dart
 
+import 'package:depomla/pages/auth_page.dart';
+import 'package:depomla/pages/post_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:depomla/pages/login_page.dart';
@@ -25,15 +27,16 @@ class DepomlaApp extends StatelessWidget {
       initialData: null,
       catchError: (context, error) => null,
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Depomla',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: const HomePage(),
+        home: const AuthPage(),
         routes: {
           '/login': (context) => const LoginPage(),
           '/profile': (context) => const ProfilePage(),
-          '/home': (context) => const HomePage(),
+          '/home': (context) => const PostLoginPage(),
         },
       ),
     );

@@ -63,6 +63,10 @@
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>Fotoğrafları kaydetmek için galeriyi kullanmamız gerekiyor.</string>
 
-
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<key>NSAllowsArbitraryLoads</key>
+			<true/>
+		</dict>
 	</dict>
 </plist>

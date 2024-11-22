@@ -3,225 +3,367 @@ import 'chat_page.dart';
 import '../models/listing_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 
-class ChatsPage extends StatelessWidget {
+class ChatsPage extends StatefulWidget {
   ChatsPage({Key? key}) : super(key: key);
 
+  @override
+  _ChatsPageState createState() => _ChatsPageState();
+}
+
+class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  final DateFormat _dateFormat = DateFormat('HH:mm');
+  late TabController _tabController;
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3, // Tümü, Depolat, Depola
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Sohbet'),
-          backgroundColor: Colors.white,
-          elevation: 1,
-          bottom: TabBar(
-            labelColor: Colors.redAccent,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.redAccent,
-            tabs: const [
-              Tab(text: 'Tümü'),
-              Tab(text: 'Depolat'),
-              Tab(text: 'Depola'),
-            ],
-          ),
-        ),
-        body: Column(
-          children: [
-            // Quick Filters
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Chip(label: Text('Tümü')),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Chip(label: Text('Okunmamış')),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Chip(label: Text('Önemli')),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // All Chats
-                  _buildChatList(context, categoryFilter: null),
-                  // Depolat (for storage)
-                  _buildChatList(context, categoryFilter: 'storage'),
-                  // Depola (for deposit)
-                  _buildChatList(context, categoryFilter: 'deposit'),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
   }
 
-  Widget _buildChatList(BuildContext context, {String? categoryFilter}) {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildChatList(BuildContext context, {String? categoryFilter, bool showUnreadOnly = false}) {
+    final currentUser = _auth.currentUser;
+
+    if (currentUser == null) {
+      return const Center(
+        child: Text(
+          'Giriş yapmanız gerekiyor.',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+        ),
+      );
+    }
+
+    // Tür belirterek Query oluşturuyoruz ve lastMessageTime'a göre sıralıyoruz
+    Query<Map<String, dynamic>> chatsQuery = _firestore
+        .collection('chats')
+        .where('participants', arrayContains: currentUser.uid)
+        .orderBy('lastMessageTime', descending: true);
+
+    if (categoryFilter != null) {
+      chatsQuery = chatsQuery.where('category', isEqualTo: categoryFilter);
+    }
+
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _firestore
-          .collection('chats')
-          .where('participants', arrayContains: _auth.currentUser?.uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      stream: chatsQuery.snapshots(),
+      builder: (context, chatSnapshot) {
+        if (chatSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('Henüz sohbet yok.'));
+        if (chatSnapshot.hasError) {
+          return Center(
+            child: Text(
+              'Bir hata oluştu: ${chatSnapshot.error}',
+              style: const TextStyle(fontSize: 16, color: Colors.red),
+            ),
+          );
         }
 
-        final chatDocs = snapshot.data!.docs;
+        if (!chatSnapshot.hasData || chatSnapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Text(
+              'Henüz sohbet yok.',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+        }
 
-        return ListView.builder(
+        final chatDocs = chatSnapshot.data!.docs;
+
+        return ListView.separated(
+          separatorBuilder: (context, index) => const Divider(height: 1),
           itemCount: chatDocs.length,
           itemBuilder: (context, index) {
             final chatData = chatDocs[index].data();
             final chatId = chatDocs[index].id;
 
-            return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              future: _firestore.collection('listings').doc(chatData['listingId']).get(),
-              builder: (context, listingSnapshot) {
-                if (listingSnapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text('Yükleniyor...'),
-                  );
-                }
-
-                if (listingSnapshot.hasError || !listingSnapshot.hasData || !listingSnapshot.data!.exists) {
-                  return const ListTile(
-                    title: Text('İlan bulunamadı.'),
-                  );
-                }
-
-                final listing = Listing.fromDocument(listingSnapshot.data!);
-
-                // Skip items not matching the category filter
-                if (categoryFilter != null && listing.listingType != categoryFilter) {
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _firestore
+                  .collection('chats')
+                  .doc(chatId)
+                  .collection('messages')
+                  .orderBy('createdAt', descending: true)
+                  .limit(1)
+                  .snapshots(),
+              builder: (context, messageSnapshot) {
+                if (messageSnapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox.shrink();
                 }
 
-                final otherUserId = (chatData['participants'] as List<dynamic>)
-                    .firstWhere((id) => id != _auth.currentUser?.uid);
+                if (messageSnapshot.hasError) {
+                  return ListTile(
+                    title: Text('Hata: ${messageSnapshot.error}'),
+                  );
+                }
 
-                return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  future: _firestore.collection('users').doc(otherUserId).get(),
-                  builder: (context, userSnapshot) {
-                    if (userSnapshot.connectionState == ConnectionState.waiting) {
-                      return const ListTile(
-                        title: Text('Yükleniyor...'),
-                      );
-                    }
+                if (!messageSnapshot.hasData || messageSnapshot.data!.docs.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
-                    if (userSnapshot.hasError || !userSnapshot.hasData || !userSnapshot.data!.exists) {
-                      return const ListTile(
-                        title: Text('Kullanıcı bulunamadı.'),
-                      );
-                    }
+                final lastMessageDoc = messageSnapshot.data!.docs.first;
+                final lastMessage = lastMessageDoc.data();
+                final messageId = lastMessageDoc.id; // Mesaj belge kimliğini alıyoruz
 
-                    final userData = userSnapshot.data!.data()!;
-                    final userName = userData['displayName'] ?? 'Bilinmeyen Kullanıcı';
-                    final userPhotoUrl = userData['photoURL'];
+                // 'isRead' ve 'senderId' alanlarının varlığını kontrol ediyoruz
+                final isUnread = (lastMessage['isRead'] ?? false) == false &&
+                    (lastMessage['senderId'] ?? '') != currentUser.uid;
 
-                    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: _firestore
-                          .collection('chats')
-                          .doc(chatId)
-                          .collection('messages')
-                          .orderBy('createdAt', descending: true)
-                          .limit(1)
-                          .snapshots(),
-                      builder: (context, messageSnapshot) {
-                        if (messageSnapshot.connectionState == ConnectionState.waiting) {
-                          return const ListTile(
-                            title: Text('Yükleniyor...'),
-                          );
-                        }
+                if (showUnreadOnly && !isUnread) {
+                  return const SizedBox.shrink();
+                }
 
-                        if (messageSnapshot.hasError ||
-                            !messageSnapshot.hasData ||
-                            messageSnapshot.data!.docs.isEmpty) {
-                          return ListTile(
-                            leading: CircleAvatar(
-                              radius: 24,
-                              backgroundImage: userPhotoUrl != null && userPhotoUrl.isNotEmpty
-                                  ? NetworkImage(userPhotoUrl)
-                                  : const AssetImage('assets/default_avatar.png') as ImageProvider,
-                            ),
-                            title: Text(userName),
-                            subtitle: const Text('Henüz mesaj yok.'),
-                            trailing: const SizedBox.shrink(),
-                          );
-                        }
-
-                        final lastMessage = messageSnapshot.data!.docs.first.data();
-                        final isUnread = lastMessage['isRead'] == false &&
-                            lastMessage['senderId'] != _auth.currentUser?.uid;
-
-                        return ListTile(
-                          leading: CircleAvatar(
-                            radius: 24,
-                            backgroundImage: userPhotoUrl != null && userPhotoUrl.isNotEmpty
-                                ? NetworkImage(userPhotoUrl)
-                                : const AssetImage('assets/default_avatar.png') as ImageProvider,
-                          ),
-                          title: Text(
-                            userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            lastMessage['text'] ?? '',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          trailing: isUnread
-                              ? CircleAvatar(
-                                  radius: 5,
-                                  backgroundColor: Colors.red,
-                                )
-                              : const SizedBox.shrink(),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatPage(chatId: chatId, listing: listing),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                return _buildChatTile(
+                  context,
+                  chatId,
+                  chatData,
+                  lastMessage,
+                  isUnread,
+                  categoryFilter,
+                  messageId, // Mesaj belge kimliğini geçiriyoruz
                 );
               },
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildChatTile(
+    BuildContext context,
+    String chatId,
+    Map<String, dynamic> chatData,
+    Map<String, dynamic> lastMessage,
+    bool isUnread,
+    String? categoryFilter,
+    String messageId, // Yeni parametre
+  ) {
+    final currentUser = _auth.currentUser;
+
+    // Diğer katılımcının ID'sini alıyoruz
+    final participants = chatData['participants'] as List<dynamic>? ?? [];
+    if (participants.length < 2) {
+      return const ListTile(
+        title: Text('Diğer kullanıcı bulunamadı.'),
+      );
+    }
+    final otherUserId = participants.firstWhere((id) => id != currentUser!.uid, orElse: () => '');
+
+    if (otherUserId.isEmpty) {
+      return const ListTile(
+        title: Text('Diğer kullanıcı bulunamadı.'),
+      );
+    }
+
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: _firestore
+          .collection('users')
+          .doc(otherUserId)
+          .get(),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.connectionState == ConnectionState.waiting) {
+          return const ListTile(
+            title: Text('Yükleniyor...'),
+          );
+        }
+
+        if (userSnapshot.hasError || !userSnapshot.hasData || !userSnapshot.data!.exists) {
+          return const ListTile(
+            title: Text('Kullanıcı bulunamadı.'),
+          );
+        }
+
+        final userData = userSnapshot.data!.data()!;
+        final userName = userData['displayName'] ?? 'Bilinmeyen Kullanıcı';
+        final userPhotoUrl = userData['photoURL'];
+
+        return ListTile(
+          leading: CircleAvatar(
+            radius: 24,
+            backgroundImage: userPhotoUrl != null && userPhotoUrl.isNotEmpty
+                ? NetworkImage(userPhotoUrl)
+                : const AssetImage('assets/default_avatar.png') as ImageProvider,
+          ),
+          title: Text(
+            userName,
+            style: TextStyle(
+              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          subtitle: Text(
+            lastMessage['text'] ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          trailing: isUnread
+              ? const CircleAvatar(
+                  radius: 5,
+                  backgroundColor: Colors.blue,
+                )
+              : const SizedBox.shrink(),
+          onTap: () async {
+            if (isUnread) {
+              try {
+                await _firestore
+                    .collection('chats')
+                    .doc(chatId)
+                    .collection('messages')
+                    .doc(messageId) // Doğru belge kimliği ile güncelleme yapıyoruz
+                    .update({'isRead': true});
+              } catch (e) {
+                print('Mesaj güncellenirken hata: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Mesaj güncellenirken bir hata oluştu.')),
+                );
+              }
+            }
+
+            try {
+              final listingId = chatData['listingId'];
+              if (listingId == null || listingId.toString().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('İlgili ilan bulunamadı.')),
+                );
+                return;
+              }
+
+              final listingDoc = await _firestore.collection('listings').doc(listingId).get();
+
+              if (!listingDoc.exists) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('İlgili ilan bulunamadı.')),
+                );
+                return;
+              }
+
+              final listing = Listing.fromDocument(listingDoc);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    chatId: chatId,
+                    listing: listing,
+                  ),
+                ),
+              );
+            } catch (e) {
+              print('İlan alınırken hata: $e');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('İlan alınırken bir hata oluştu.')),
+              );
+            }
+          },
+          onLongPress: () {
+            _showChatOptions(context, chatId);
+          },
+        );
+      },
+    );
+  }
+
+  void _showChatOptions(BuildContext context, String chatId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Önemli Yap'),
+                onTap: () async {
+                  try {
+                    // Sohbeti önemli olarak işaretle (kategori olarak 'important' yapıyoruz)
+                    await _firestore.collection('chats').doc(chatId).update({
+                      'category': 'important',
+                      'lastMessageTime': FieldValue.serverTimestamp(), // lastMessageTime'ı da güncelliyoruz
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sohbet önemli olarak işaretlendi.')),
+                    );
+                  } catch (e) {
+                    print('Sohbet önemli olarak işaretlenirken hata: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sohbet önemli olarak işaretlenirken bir hata oluştu.')),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: const Text('Sil'),
+                onTap: () async {
+                  try {
+                    // Sohbeti sil
+                    await _firestore.collection('chats').doc(chatId).delete();
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sohbet silindi.')),
+                    );
+                  } catch (e) {
+                    print('Sohbet silinirken hata: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sohbet silinirken bir hata oluştu.')),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3, // Tümü, Okunmamış, Önemli
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Sohbet',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontSize: 22,
+            ),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 1,
+          bottom: TabBar(
+            controller: _tabController,
+            labelColor: Colors.redAccent,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.redAccent,
+            tabs: const [
+              Tab(text: 'Tümü'),
+              Tab(text: 'Okunmamış'),
+              Tab(text: 'Önemli'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildChatList(context),
+            _buildChatList(context, showUnreadOnly: true),
+            _buildChatList(context, categoryFilter: 'important'), // 'deposit' yerine 'important'
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:depomla/pages/post_login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:depomla/services/auth_service.dart';
@@ -63,7 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
         // Kayıt başarılı, ana sayfaya yönlendir
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const PostLoginPage()),
         );
       } else {
         // Kayıt başarısız
@@ -178,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (user != null) {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => const HomePage()),
+                            MaterialPageRoute(builder: (context) => const PostLoginPage()),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(

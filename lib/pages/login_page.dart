@@ -8,6 +8,7 @@ import 'package:depomla/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'forgot_password.dart';
+import 'post_login_page.dart';
 import 'register_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore importu ekleyin
 
@@ -69,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
       // Giriş başarılı, ana sayfaya yönlendir
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => PostLoginPage()),
       );
     } on FirebaseAuthException catch (e) {
       // Loading göstergesini kapatma
@@ -216,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                           // Başarılı giriş sonrası ProfilSayfasi'na yönlendirme
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => HomePage()),
+                            MaterialPageRoute(builder: (context) => PostLoginPage()),
                           );
                         } else {
                           // Giriş iptal edildi veya başarısız oldu

@@ -20,47 +20,52 @@ class AuthService {
   }
 
   // E-posta ve Şifre ile Kayıt Olma
-  Future<User?> signUpWithEmailAndPassword(String email, String password, String displayName) async {
-    try {
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+ Future<User?> signUpWithEmailAndPassword(
+    String email, String password, String displayName) async {
+  try {
+    UserCredential credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    User? user = credential.user;
+
+    if (user != null) {
+      // Kullanıcı adı güncelleme
+      await user.updateDisplayName(displayName);
+      await user.reload();
+      user = _auth.currentUser;
+
+      // Firestore'a kullanıcı ekleme
+      UserModel newUser = UserModel(
+        uid: user!.uid,
+        email: user.email!,
+        displayName: displayName,
+        photoURL: user.photoURL ?? '',
+        lastSignIn: null, // İlk değer null
       );
 
-      User? user = credential.user;
-
-      if (user != null) {
-        // Kullanıcı adı güncelleme
-        await user.updateDisplayName(displayName);
-        await user.reload();
-        user = _auth.currentUser;
-
-        // Firestore'a kullanıcı ekleme
-        UserModel newUser = UserModel(
-          uid: user!.uid,
-          email: user.email!,
-          displayName: displayName,
-          photoURL: user.photoURL ?? '',
-          lastSignIn: FieldValue.serverTimestamp() as Timestamp?,
-        );
-
-        await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
-      }
-
-      return user;
-    } on FirebaseAuthException catch (e) {
-      // Hata yönetimi
-      print('FirebaseAuthException: ${e.message}');
-      rethrow;
-    } catch (e) {
-      // Genel hata yönetimi
-      print('Exception: $e');
-      rethrow;
+      // `FieldValue.serverTimestamp()` ile lastSignIn alanı yazılır
+      await _firestore.collection('users').doc(user.uid).set({
+        ...newUser.toMap(),
+        'lastSignIn': FieldValue.serverTimestamp(),
+      });
     }
-  }
 
+    return user;
+  } on FirebaseAuthException catch (e) {
+    // Hata yönetimi
+    print('FirebaseAuthException: ${e.message}');
+    rethrow;
+  } catch (e) {
+    // Genel hata yönetimi
+    print('Exception: $e');
+    rethrow;
+  }
+}
   // E-posta ve Şifre ile Giriş Yapma
-  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
     try {
       UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -98,19 +103,22 @@ class AuthService {
         return null;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
 
       if (user != null) {
         // Firestore'da kullanıcı mevcut değilse ekle
-        DocumentSnapshot<Map<String, dynamic>> userDoc = await _firestore.collection('users').doc(user.uid).get();
+        DocumentSnapshot<Map<String, dynamic>> userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
 
         if (!userDoc.exists) {
           UserModel newUser = UserModel(
@@ -118,10 +126,14 @@ class AuthService {
             email: user.email!,
             displayName: user.displayName ?? '',
             photoURL: user.photoURL ?? '',
-            lastSignIn: FieldValue.serverTimestamp() as Timestamp?,
+            lastSignIn:
+                Timestamp.fromDate(DateTime.now()), // Dönüştürme yapıldı
           );
 
-          await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .set(newUser.toMap());
         } else {
           // Mevcut kullanıcının lastSignIn alanını güncelle
           await _firestore.collection('users').doc(user.uid).update({

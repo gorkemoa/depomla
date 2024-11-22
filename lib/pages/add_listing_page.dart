@@ -1,5 +1,6 @@
 // lib/pages/add_listing_page.dart
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:depomla/services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,7 +10,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/listing_model.dart';
-import '../services/listing_service.dart';
+import 'listings_details_page.dart';
 
 class AddListingPage extends StatefulWidget {
   const AddListingPage({super.key});
@@ -25,11 +26,8 @@ class _AddListingPageState extends State<AddListingPage> {
 
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
-
   bool _isLoading = false;
-  String? _error;
 
-  // İlan türünü seçmek için enum kullanıyoruz
   ListingType _selectedType = ListingType.deposit;
 
   Future<void> _pickImage() async {
@@ -42,78 +40,87 @@ class _AddListingPageState extends State<AddListingPage> {
     }
   }
 
-  Future<String> _uploadImage(File image) async {
-    String fileId = const Uuid().v4();
-    Reference storageRef =
-        FirebaseStorage.instance.ref().child('listing_images').child('$fileId.jpg');
-    UploadTask uploadTask = storageRef.putFile(image);
-    TaskSnapshot snapshot = await uploadTask;
-    String downloadUrl = await snapshot.ref.getDownloadURL();
-    return downloadUrl;
-  }
-
   Future<void> _addListing() async {
-    String title = titleController.text.trim();
-    String description = descriptionController.text.trim();
-    String priceText = priceController.text.trim();
-
-    if (title.isEmpty || description.isEmpty || priceText.isEmpty || _imageFile == null) {
+    if (titleController.text.isEmpty ||
+        descriptionController.text.isEmpty ||
+        priceController.text.isEmpty ||
+        _imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldurun ve bir fotoğraf seçin.')),
+        const SnackBar(
+            content:
+                Text('Lütfen tüm alanları doldurun ve bir fotoğraf seçin.')),
       );
       return;
     }
 
-    double? price = double.tryParse(priceText);
+    double? price = double.tryParse(priceController.text.trim());
     if (price == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen geçerli bir fiyat girin.')),
+        const SnackBar(content: Text('Geçerli bir fiyat girin.')),
       );
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     try {
       // Kullanıcı bilgilerini al
-      AuthService authService = AuthService();
-      final user = await authService.getCurrentUser();
-      if (user == null) {
-        throw Exception('Kullanıcı giriş yapmamış.');
-      }
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('Kullanıcı giriş yapmamış.');
 
       // Fotoğrafı yükle
-      String imageUrl = await _uploadImage(_imageFile!);
+      String fileId = const Uuid().v4();
+      String imageUrl = await FirebaseStorage.instance
+          .ref()
+          .child('listing_images')
+          .child('$fileId.jpg')
+          .putFile(_imageFile!)
+          .then((snapshot) => snapshot.ref.getDownloadURL());
 
-      // İlanı Firestore'a ekle
+      // İlanı oluştur
       Listing listing = Listing(
-        id: '',
-        title: title,
-        description: description,
+        id: '', // ID, Firestore tarafından otomatik atanacak
+        title: titleController.text.trim(),
+        description: descriptionController.text.trim(),
         price: price,
         imageUrl: imageUrl,
         userId: user.uid,
         createdAt: Timestamp.now(),
-        listingType: _selectedType, // listingType parametresini ekledik
+        listingType: _selectedType,
       );
 
-      await FirebaseFirestore.instance
+      // Firestore'a ilan ekle
+      DocumentReference docRef = await FirebaseFirestore.instance
           .collection('listings')
           .add(listing.toMap());
 
-      // Başarılı mesajı ve geri dönme
+      // Firestore tarafından atanan ID'yi ilan nesnesine ekle
+      listing = listing.copyWith(id: docRef.id);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('İlan başarıyla eklendi.')),
       );
 
-      Navigator.pop(context);
+// Formu sıfırla
+      titleController.clear();
+      descriptionController.clear();
+      priceController.clear();
+      setState(() {
+        _imageFile = null;
+      });
+
+// İlan detayına yönlendir
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ListingDetailPage(listing: listing),
+        ),
+      );
     } catch (e) {
-      print('İlan ekleme hatası: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İlan eklenirken bir hata oluştu: $e')),
+        SnackBar(content: Text('Hata: $e')),
       );
     } finally {
       setState(() {
@@ -135,24 +142,60 @@ class _AddListingPageState extends State<AddListingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('İlan Ekle'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_error != null)
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
+                  const Text(
+                    'Yeni İlan Oluştur',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Fotoğraf Seçme
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey[200],
+                        image: _imageFile != null
+                            ? DecorationImage(
+                                image: FileImage(_imageFile!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _imageFile == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.camera_alt,
+                                    size: 50, color: Colors.grey),
+                                Text('Fotoğraf Yükle',
+                                    style: TextStyle(color: Colors.grey)),
+                              ],
+                            )
+                          : null,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // İlan Başlığı
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'İlan Başlığı',
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.title),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -160,38 +203,45 @@ class _AddListingPageState extends State<AddListingPage> {
                   // İlan Açıklaması
                   TextField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'İlan Açıklaması',
-                      border: OutlineInputBorder(),
-                    ),
                     maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: 'Açıklama',
+                      prefixIcon: const Icon(Icons.description),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
-                  // İlan Fiyatı
+                  // Fiyat Girişi
                   TextField(
                     controller: priceController,
-                    decoration: const InputDecoration(
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
                       labelText: 'Fiyat (₺)',
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.attach_money),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
                   ),
                   const SizedBox(height: 16),
 
-                  // İlan Türü Seçimi
+                  // İlan Türü
                   DropdownButtonFormField<ListingType>(
                     value: _selectedType,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'İlan Türü',
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.category),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     items: ListingType.values.map((ListingType type) {
                       return DropdownMenuItem<ListingType>(
                         value: type,
                         child: Text(type == ListingType.deposit
                             ? 'Eşyalarını Depolamak'
-                            : 'Ek Gelir için Eşya Depolamak'),
+                            : 'Ek Gelir için Depolamak'),
                       );
                     }).toList(),
                     onChanged: (ListingType? newValue) {
@@ -202,38 +252,18 @@ class _AddListingPageState extends State<AddListingPage> {
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  // Fotoğraf Seçme
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: _imageFile != null
-                        ? Image.file(
-                            _imageFile!,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            height: 200,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // İlan Ekleme Butonu
+                  // İlan Ekle Butonu
                   ElevatedButton(
                     onPressed: _addListing,
-                    child: const Text('İlan Ekle'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      textStyle: const TextStyle(fontSize: 18),
                     ),
+                    child: const Text('İlan Ekle'),
                   ),
                 ],
               ),
