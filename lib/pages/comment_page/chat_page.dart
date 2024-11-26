@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/listing_model.dart';
+import '../../models/listing_model.dart';
 import 'package:intl/intl.dart';
-import 'listings_details_page.dart'; // İlgili ilana yönlendirme için gerekli sayfa
+import '../listing_page/listings_details_page.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -25,6 +25,7 @@ class _ChatPageState extends State<ChatPage> {
     _markMessagesAsRead();
   }
 
+  /// Okunmamış mesajları "okundu" olarak işaretler
   Future<void> _markMessagesAsRead() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -41,6 +42,43 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  /// Mesaj gönderir ve "lastMessageTime" alanını günceller
+  Future<void> _sendMessage() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mesaj göndermek için giriş yapmalısınız.')),
+      );
+      return;
+    }
+
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    try {
+      await _firestore.collection('chats').doc(widget.chatId).collection('messages').add({
+        'text': text,
+        'senderId': currentUser.uid,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      await _firestore.collection('chats').doc(widget.chatId).update({
+        'lastMessageTime': FieldValue.serverTimestamp(),
+              'isHidden': false, // Sohbeti görünür yap
+
+      });
+
+      _messageController.clear();
+    } catch (e) {
+      print('Mesaj gönderilirken hata: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mesaj gönderilirken bir hata oluştu.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,17 +88,14 @@ class _ChatPageState extends State<ChatPage> {
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.blue,
       ),
       body: Column(
         children: [
-          // İlan Kartı
           _buildListingCard(),
           const Divider(height: 1),
-          // Mesaj Listesi
           Expanded(child: _buildMessagesList()),
           const Divider(height: 1),
-          // Mesaj Gönderme Alanı
           _buildMessageInput(),
         ],
       ),
@@ -70,7 +105,6 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildListingCard() {
     return GestureDetector(
       onTap: () {
-        // İlan kartına tıklanıldığında ilgili ilana yönlendirme
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -138,7 +172,7 @@ class _ChatPageState extends State<ChatPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                 decoration: BoxDecoration(
-                  color: isMe ? Colors.deepPurple : Colors.grey[300],
+                  color: isMe ? Colors.blue : Colors.grey[300],
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(12),
                     topRight: const Radius.circular(12),
@@ -207,7 +241,7 @@ class _ChatPageState extends State<ChatPage> {
             FloatingActionButton(
               onPressed: _sendMessage,
               mini: true,
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: Colors.blue,
               child: const Icon(Icons.send, color: Colors.white),
             ),
           ],
@@ -215,41 +249,4 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
   }
-
-  Future<void> _sendMessage() async {
-  final currentUser = FirebaseAuth.instance.currentUser;
-
-  if (currentUser == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Mesaj göndermek için giriş yapmalısınız.')),
-    );
-    return;
-  }
-
-  final text = _messageController.text.trim();
-  if (text.isEmpty) return;
-
-  try {
-    // Mesajı `messages` koleksiyonuna ekle
-    await _firestore.collection('chats').doc(widget.chatId).collection('messages').add({
-      'text': text,
-      'senderId': currentUser.uid,
-      'createdAt': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
-
-    // `lastMessageTime` alanını güncelle
-    await _firestore.collection('chats').doc(widget.chatId).update({
-      'lastMessageTime': FieldValue.serverTimestamp(),
-    });
-
-    _messageController.clear();
-  } catch (e) {
-    print('Mesaj gönderilirken hata: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Mesaj gönderilirken bir hata oluştu.')),
-    );
-  }
-}
-
 }

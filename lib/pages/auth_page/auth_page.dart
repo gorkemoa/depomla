@@ -1,6 +1,6 @@
 import 'package:depomla/pages/home_page.dart';
-import 'package:depomla/pages/login_page.dart';
-import 'package:depomla/pages/post_login_page.dart';
+import 'package:depomla/pages/auth_page/login_page.dart';
+import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 

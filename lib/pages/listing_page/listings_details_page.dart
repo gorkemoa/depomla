@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/listing_model.dart';
-import '../models/user_model.dart';
-import 'chat_page.dart';
-import 'user_profile_page.dart';
-import 'full_screen_image_page.dart';
+import '../../models/listing_model.dart';
+import '../../models/user_model.dart';
+import '../comment_page/chat_page.dart';
+import '../profil_page/user_profile_page.dart';
+import '../comment_page/full_screen_image_page.dart';
 
 class ListingDetailPage extends StatefulWidget {
   final Listing listing;

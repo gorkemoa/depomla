@@ -68,5 +68,27 @@
 			<key>NSAllowsArbitraryLoads</key>
 			<true/>
 		</dict>
+		<key>FirebaseAppDelegateProxyEnabled</key>
+<false/>
+
+<key>UIBackgroundModes</key>
+<array>
+  <string>remote-notification</string>
+  <string>fetch</string>
+</array>
+<key>NSAppTransportSecurity</key>
+<dict>
+  <key>NSAllowsArbitraryLoads</key>
+  <true/>
+</dict>
+<key>UIUserNotificationSettings</key>
+<dict>
+  <key>UIUserNotificationTypeBadge</key>
+  <true/>
+  <key>UIUserNotificationTypeSound</key>
+  <true/>
+  <key>UIUserNotificationTypeAlert</key>
+  <true/>
+</dict>
 	</dict>
 </plist>

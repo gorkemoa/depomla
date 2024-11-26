@@ -1,8 +1,11 @@
+import 'package:depomla/notifications_page.dart';
+import 'package:depomla/pages/auth_page/settings_page.dart';
+import 'package:depomla/pages/listing_page/my_listings_page.dart';
 import 'package:flutter/material.dart';
-import 'listings_page.dart';
-import 'chats_page.dart';
-import 'add_listing_page.dart';
-import 'profile_page.dart';
+import 'listing_page/listings_page.dart';
+import 'comment_page/chats_page.dart';
+import 'listing_page/add_listing_page.dart';
+import 'profil_page/profile_page.dart';
 import '../models/listing_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,11 +23,13 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
-      ListingsPage(category: widget.selectedCategory), // Dinamik kategoriye göre ana sayfa
-       ChatsPage(),
+      ListingsPage(
+          category:
+              widget.selectedCategory), // Dinamik kategoriye göre ana sayfa
+      ChatsPage(),
       const AddListingPage(),
-      const ListingsPage(category: ListingType.deposit), // İlanlarım için örnek
-      const ProfilePage(),
+      const MyListingsPage(), // İlanlarım için örnek
+      SettingsPage(),
     ];
 
     return Scaffold(
@@ -53,7 +58,8 @@ class _HomePageState extends State<HomePage> {
                 label: 'Sohbetler',
               ),
               BottomNavigationBarItem(
-                icon: SizedBox.shrink(), // Ortadaki öğe boş olacak, yerini custom widget alacak
+                icon: SizedBox
+                    .shrink(), // Ortadaki öğe boş olacak, yerini custom widget alacak
                 label: '',
               ),
               BottomNavigationBarItem(

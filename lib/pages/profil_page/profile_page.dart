@@ -9,11 +9,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
-import 'my_listings_page.dart';
-import 'post_login_page.dart';
-import 'settings_page.dart';
-import '../models/user_model.dart';
-import '../services/auth_service.dart';
+import '../listing_page/my_listings_page.dart';
+import '../auth_page/post_login_page.dart';
+import '../auth_page/settings_page.dart';
+import '../../models/user_model.dart';
+import '../../services/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);

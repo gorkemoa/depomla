@@ -1,4 +1,4 @@
-import 'package:depomla/pages/post_login_page.dart';
+import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:depomla/services/auth_service.dart';
@@ -6,7 +6,7 @@ import 'package:depomla/pages/home_page.dart';
 import 'package:depomla/components/my_button.dart';
 import 'package:depomla/components/my_textfield.dart';
 
-import '../components/square_tile.dart';
+import '../../components/square_tile.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {

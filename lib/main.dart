@@ -1,20 +1,74 @@
 // lib/main.dart
-
-import 'package:depomla/pages/auth_page.dart';
-import 'package:depomla/pages/post_login_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:depomla/notifications_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:depomla/pages/login_page.dart';
-import 'package:depomla/pages/profile_page.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:depomla/services/auth_service.dart';
-import 'package:depomla/pages/home_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 
-void main() async {
+import 'package:depomla/pages/auth_page/auth_page.dart';
+import 'package:depomla/pages/auth_page/post_login_page.dart';
+import 'package:depomla/pages/auth_page/login_page.dart';
+import 'package:depomla/pages/profil_page/profile_page.dart';
+import 'package:depomla/services/auth_service.dart';
+import 'dart:io' show Platform; // Platform kontrolü için ekleme
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(); // Firebase başlatılıyor
+
+  // Firestore ayarları
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
+  // Yerel bildirimleri başlat
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  // iOS Initialization Settings (DarwinInitializationSettings olarak güncellendi)
+  final DarwinInitializationSettings initializationSettingsIOS =
+      DarwinInitializationSettings(
+    requestSoundPermission: true,
+    requestBadgePermission: true,
+    requestAlertPermission: true,
+  );
+
+  // Tüm platformlar için Initialization Settings
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: selectNotification, // onSelectNotification yerine
+  );
+
   runApp(const DepomlaApp());
+}
+
+// iOS'ta yerel bildirim alındığında çalışacak fonksiyon
+Future onDidReceiveLocalNotification(
+    int id, String? title, String? body, String? payload) async {
+  // iOS için yerel bildirim alındığında yapılacak işlemler
+  // Örneğin, kullanıcıya bir dialog gösterilebilir
+  // Bu fonksiyon async olarak tanımlanmıştır
+}
+
+// Bildirim seçildiğinde çalışacak fonksiyon
+Future selectNotification(NotificationResponse notificationResponse) async {
+  // Bildirim seçildiğinde yapılacak işlemler
+  // Örneğin, belirli bir sayfaya yönlendirme yapılabilir
+  final String? payload = notificationResponse.payload;
+  if (payload != null) {
+    // Payload'a göre yönlendirme işlemleri
+  }
 }
 
 class DepomlaApp extends StatelessWidget {
@@ -37,6 +91,7 @@ class DepomlaApp extends StatelessWidget {
           '/login': (context) => const LoginPage(),
           '/profile': (context) => const ProfilePage(),
           '/home': (context) => const PostLoginPage(),
+          '/notifications': (context) =>  NotificationsPage(),
         },
       ),
     );

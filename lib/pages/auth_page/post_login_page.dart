@@ -1,6 +1,6 @@
+import 'package:depomla/models/listing_model.dart';
 import 'package:flutter/material.dart';
-import 'home_page.dart'; // Doğru şekilde HomePage'i import edin
-import '../models/listing_model.dart'; // ListingType enum'u burada tanımlı
+import '../home_page.dart';
 import 'login_page.dart'; // Çıkış sonrası yönlendirme için LoginPage'i import edin
 import 'package:firebase_auth/firebase_auth.dart'; // Çıkış yapmak için gerekli
 import 'package:carousel_slider/carousel_slider.dart'; // CarouselSlider paketi

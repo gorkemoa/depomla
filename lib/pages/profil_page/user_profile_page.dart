@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/listing_model.dart';
-import '../models/user_model.dart';
-import 'listings_details_page.dart'; // Doğru import
+import '../../models/listing_model.dart';
+import '../../models/user_model.dart';
+import '../listing_page/listings_details_page.dart'; // Doğru import
 
 class UserProfilePage extends StatelessWidget {
   final UserModel user;

@@ -178,4 +178,15 @@ class AuthService {
       rethrow;
     }
   }
+ Future<void> saveUserDataToFirestore(User user, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('users').doc(user.uid).set(data);
+      print("Kullanıcı verileri başarıyla kaydedildi!");
+    } catch (e) {
+      print("Kullanıcı verileri kaydedilirken bir hata oluştu: $e");
+      rethrow;
+    }
+  }
+
+  
 }

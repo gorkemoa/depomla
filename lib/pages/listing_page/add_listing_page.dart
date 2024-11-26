@@ -9,7 +9,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
-import '../models/listing_model.dart';
+import '../../models/listing_model.dart';
 import 'listings_details_page.dart';
 
 class AddListingPage extends StatefulWidget {
