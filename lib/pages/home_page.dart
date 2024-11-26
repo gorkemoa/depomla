@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
       ChatsPage(),
       const AddListingPage(),
       const MyListingsPage(), // İlanlarım için örnek
-      SettingsPage(),
+      ProfilePage(),
     ];
 
     return Scaffold(

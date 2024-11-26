@@ -7,8 +7,8 @@ class UserModel {
   final String displayName;
   final String? photoURL;
   final Timestamp? lastSignIn;
-  final String city;         // Şehir ID'si
-  final String district;     // İlçe ID'si
+  final String city; // Şehir ID'si
+  final String district; // İlçe ID'si
   final String neighborhood; // Mahalle ID'si
 
   UserModel({
@@ -49,8 +49,8 @@ class UserModel {
   }
 
   UserModel copyWith({
-    String? email,
     String? displayName,
+    String? email,
     String? photoURL,
     Timestamp? lastSignIn,
     String? city,
@@ -58,9 +58,9 @@ class UserModel {
     String? neighborhood,
   }) {
     return UserModel(
-      uid: this.uid,
-      email: email ?? this.email,
+      uid: this.uid, // Zorunlu uid parametresini ekledik
       displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
       photoURL: photoURL ?? this.photoURL,
       lastSignIn: lastSignIn ?? this.lastSignIn,
       city: city ?? this.city,

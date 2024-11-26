@@ -1,4 +1,4 @@
-// lib/pages/profile_page.dart
+// lib/pages/profile_page/profile_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,11 +9,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../listing_page/my_listings_page.dart';
 import '../auth_page/post_login_page.dart';
 import '../auth_page/settings_page.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../providers/user_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -28,29 +31,15 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
 
-  UserModel? userModel;
   bool _isUpdating = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          setState(() {
-            userModel = UserModel.fromDocument(doc);
-          });
-        }
-      } catch (e) {
-        _showSnackBar('Kullanıcı verisi alınırken bir hata oluştu.');
-      }
-    }
+    // Kullanıcı verilerini yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProvider>(context, listen: false).loadUserData();
+    });
   }
 
   Future<void> _updateProfilePhoto() async {
@@ -80,9 +69,15 @@ class _ProfilePageState extends State<ProfilePage> {
         'photoURL': photoURL,
       });
 
-      setState(() {
-        userModel = userModel?.copyWith(photoURL: photoURL);
-      });
+      // UserProvider üzerinden userModel'e eriş ve güncelle
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final currentUserModel = userProvider.userModel;
+
+      if (currentUserModel != null) {
+        userProvider.updateUserModel(currentUserModel.copyWith(photoURL: photoURL));
+      } else {
+        _showSnackBar('Kullanıcı bilgileri bulunamadı.');
+      }
 
       _showSnackBar('Profil fotoğrafı başarıyla güncellendi.');
     } catch (e) {
@@ -108,15 +103,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    String lastSignInDate = userModel != null && userModel!.lastSignIn != null
-        ? DateFormat('dd MMM yyyy HH:mm').format(userModel!.lastSignIn!.toDate())
-        : 'Bilgi bulunamadı';
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profilim'),
@@ -135,65 +128,81 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: userModel == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildProfileHeader(),
-                      const SizedBox(height: 20),
-                      _buildProfileInfo(lastSignInDate),
-                      const SizedBox(height: 20),
-                      _buildUserStats(),
-                      const SizedBox(height: 20),
-                      _buildPostLoginButton(),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Çıkış Yap'),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          backgroundColor: Colors.redAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          if (userProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final userModel = userProvider.userModel;
+
+          if (userModel == null) {
+            return const Center(child: Text('Kullanıcı bilgileri alınamadı.'));
+          }
+
+          String lastSignInDate = userModel.lastSignIn != null
+              ? DateFormat('dd MMM yyyy HH:mm').format(userModel.lastSignIn!.toDate())
+              : 'Bilgi bulunamadı';
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildProfileHeader(userModel),
+                    const SizedBox(height: 20),
+                    _buildProfileInfo(userModel, lastSignInDate),
+                    const SizedBox(height: 20),
+                    _buildUserStats(),
+                    const SizedBox(height: 20),
+                    _buildPostLoginButton(),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: _logout,
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Çıkış Yap'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (_isUpdating)
-                  Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-              ],
-            ),
+              ),
+              if (_isUpdating)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
- Widget _buildProfileHeader() {
-  return GestureDetector(
-    onTap: _updateProfilePhoto,
-    child: CircleAvatar(
-      radius: 60,
-      backgroundColor: Colors.white,
-      backgroundImage: (userModel?.photoURL?.isNotEmpty ?? false)
-          ? NetworkImage(userModel!.photoURL!)
-          : const AssetImage('assets/default_avatar.png') as ImageProvider,
-    ),
-  );
-}
+  Widget _buildProfileHeader(UserModel userModel) {
+    return GestureDetector(
+      onTap: _updateProfilePhoto,
+      child: CircleAvatar(
+        radius: 60,
+        backgroundColor: Colors.white,
+        backgroundImage: (userModel.photoURL?.isNotEmpty ?? false)
+            ? CachedNetworkImageProvider(userModel.photoURL!)
+            : const AssetImage('assets/default_avatar.png') as ImageProvider,
+      ),
+    );
+  }
 
-  Widget _buildProfileInfo(String lastSignInDate) {
+  Widget _buildProfileInfo(UserModel userModel, String lastSignInDate) {
     return Column(
       children: [
         Text(
-          userModel?.displayName ?? 'Kullanıcı',
+          userModel.displayName,
           style: GoogleFonts.poppins(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -201,8 +210,8 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: 8),
         Text(
-          userModel?.email ?? '',
-          style: GoogleFonts.poppins(fontSize: 16),
+          userModel.email,
+          style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[700]),
         ),
         const SizedBox(height: 16),
         Card(

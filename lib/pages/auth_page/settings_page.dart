@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/user_model.dart';
 import '../../notifications_page.dart';
 import '../../services/location_service.dart';
+import '../info_change_page/change_password_page.dart';
+import '../info_change_page/change_email_page.dart'; // Yeni eklenen import
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -73,6 +75,13 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  void _navigateToChangeEmail() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChangeEmailPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,6 +118,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: const Text('Şifre Değiştir'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: _navigateToChangePassword,
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.email, color: Colors.blueAccent),
+                        title: const Text('E-posta Değiştir'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: _navigateToChangeEmail,
                       ),
                     ],
                   ),
@@ -212,7 +227,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'displayName': _displayName,
-        'email': _email,
+        // 'email': _email, // E-posta güncellemesini ayrı sayfadan yapacağımız için bu satırı kaldırdık veya yorum satırı yaptık
         'city': _selectedCity ?? 'Seçilmemiş',
         'district': _selectedDistrict ?? 'Seçilmemiş',
         'neighborhood': _selectedNeighborhood ?? 'Seçilmemiş',
@@ -326,26 +341,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   onSaved: (value) => _displayName = value,
                 ),
                 const SizedBox(height: 16),
-                // E-posta
+                // E-posta (Okunabilir veya read-only olarak ayarlanabilir)
                 TextFormField(
                   initialValue: _email,
                   decoration: InputDecoration(
                     labelText: 'E-posta',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: _navigateToChangeEmail,
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'E-posta boş olamaz.';
-                    }
-                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Geçerli bir e-posta adresi giriniz.';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) => _email = value,
+                  readOnly: true, // E-posta alanını okunabilir hale getirdik
+                  // Validator ve onSaved fonksiyonlarını kaldırdık veya yorum satırı yaptık
                 ),
                 const SizedBox(height: 16),
                 // Şehir Seçiniz
@@ -424,7 +434,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ElevatedButton(
                   onPressed: _updateProfile,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blueAccent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -448,152 +459,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ],
     );
   }
-}
 
-class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({Key? key}) : super(key: key);
-
-  @override
-  State<ChangePasswordPage> createState() => _ChangePasswordPageState();
-}
-
-class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  String? _currentPassword;
-  String? _newPassword;
-  bool _isChanging = false;
-
-  Future<void> _changePassword() async {
-    if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
-
-    setState(() {
-      _isChanging = true;
-    });
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Kullanıcı giriş yapmamış.');
-
-      final cred = EmailAuthProvider.credential(
-        email: user.email!,
-        password: _currentPassword!,
-      );
-
-      await user.reauthenticateWithCredential(cred);
-      await user.updatePassword(_newPassword!);
-
-      _showSnackBar('Şifre başarıyla değiştirildi.');
-      Navigator.pop(context);
-    } catch (e) {
-      print('Şifre değiştirme hatası: $e');
-      _showSnackBar('Şifre değiştirilirken hata oluştu.');
-    } finally {
-      setState(() {
-        _isChanging = false;
-      });
-    }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required String label,
-    required Function(String?) onSaved,
-    required String? Function(String?) validator,
-  }) {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      ),
-      obscureText: true,
-      validator: validator,
-      onSaved: onSaved,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Ekran boyutuna göre responsive padding
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLargeScreen = screenWidth > 600;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Şifre Değiştir'),
-        backgroundColor: Colors.blueAccent,
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isLargeScreen ? screenWidth * 0.2 : 16,
-              vertical: 16,
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // Mevcut Şifre
-                  _buildPasswordField(
-                    label: 'Mevcut Şifre',
-                    onSaved: (value) => _currentPassword = value,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Şifre boş olamaz.' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  // Yeni Şifre
-                  _buildPasswordField(
-                    label: 'Yeni Şifre',
-                    onSaved: (value) => _newPassword = value,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Yeni şifre boş olamaz.';
-                      }
-                      if (value.length < 6) {
-                        return 'Şifre en az 6 karakter olmalıdır.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  // Şifreyi Değiştir Butonu
-                  ElevatedButton(
-                    onPressed: _changePassword,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Şifreyi Değiştir',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_isChanging)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ],
-      ),
+  void _navigateToChangeEmail() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChangeEmailPage()),
     );
   }
 }

@@ -33,6 +33,7 @@ dependencies:
   google_fonts: ^6.2.1
   carousel_slider: 
   cached_network_image: ^3.2.3
+  
 
   # Lints for better code practices
   flutter_lints: ^5.0.0
@@ -63,9 +64,9 @@ flutter:
     - assets/ilan_ver.png
     - assets/depomlablack.png
 
-  fonts:
+fonts:
     - family: Roboto
       fonts:
         - asset: fonts/Roboto-Regular.ttf
         - asset: fonts/Roboto-Bold.ttf
-          weight: 700
+          weight: 700  

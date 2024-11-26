@@ -12,9 +12,12 @@ import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:depomla/pages/auth_page/login_page.dart';
 import 'package:depomla/pages/profil_page/profile_page.dart';
 import 'package:depomla/services/auth_service.dart';
-import 'dart:io' show Platform; // Platform kontrolü için ekleme
+import 'dart:io' show Platform;
+
+import 'providers/user_provider.dart'; // Platform kontrolü için ekleme
 
 Future<void> main() async {
+  
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Firebase başlatılıyor
 
@@ -50,7 +53,14 @@ Future<void> main() async {
     onDidReceiveNotificationResponse: selectNotification, // onSelectNotification yerine
   );
 
-  runApp(const DepomlaApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const DepomlaApp(),
+    ),
+  );
 }
 
 // iOS'ta yerel bildirim alındığında çalışacak fonksiyon
