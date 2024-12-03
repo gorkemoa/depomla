@@ -60,7 +60,8 @@ class _MyListingsPageState extends State<MyListingsPage> {
             .get(const GetOptions(source: Source.server));
 
         setState(() {
-          cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+          cachedListings =
+              snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
         });
       } else {
         // Önce önbellekten veri almaya çalış
@@ -79,12 +80,14 @@ class _MyListingsPageState extends State<MyListingsPage> {
               .get();
 
           setState(() {
-            cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+            cachedListings =
+                snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
           });
         } else {
           // Önbellekteki verileri kullan
           setState(() {
-            cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+            cachedListings =
+                snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
           });
         }
       }
@@ -124,11 +127,13 @@ class _MyListingsPageState extends State<MyListingsPage> {
                       itemBuilder: (context, index) {
                         final listing = cachedListings[index];
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: ListTile(
                             leading: listing.imageUrl.isNotEmpty
                                 ? Image.network(
-                                    listing.imageUrl,
+                                    listing
+                                        .imageUrl.first, // Use the first image
                                     width: 50,
                                     height: 50,
                                     fit: BoxFit.cover,
@@ -144,7 +149,8 @@ class _MyListingsPageState extends State<MyListingsPage> {
                                       ? 'Eşyalarını Depolamak'
                                       : 'Ek Gelir için Eşya Depolamak',
                                   style: TextStyle(
-                                    color: listing.listingType == ListingType.deposit
+                                    color: listing.listingType ==
+                                            ListingType.deposit
                                         ? Colors.blue
                                         : Colors.orange,
                                     fontWeight: FontWeight.w600,
@@ -156,7 +162,8 @@ class _MyListingsPageState extends State<MyListingsPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ListingDetailPage(listing: listing),
+                                  builder: (context) =>
+                                      ListingDetailPage(listing: listing),
                                 ),
                               );
                             },

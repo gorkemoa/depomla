@@ -1,3 +1,5 @@
+// lib/pages/listing_page/listings_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -78,7 +80,9 @@ class _ListingsPageState extends State<ListingsPage> {
       }
     } catch (e) {
       print('Veri alınırken hata oluştu: $e');
-      // Hata durumunda kullanıcıya mesaj gösterebilirsiniz
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veri alınırken bir hata oluştu: $e')),
+      );
     } finally {
       setState(() {
         isLoading = false;
@@ -98,7 +102,7 @@ class _ListingsPageState extends State<ListingsPage> {
         title: Text(
           widget.category == ListingType.deposit
               ? 'Depola İlanlar'
-              : 'Depolat İlanlar',
+              : 'Depolama İlanları',
         ),
         actions: [
           IconButton(
@@ -108,8 +112,18 @@ class _ListingsPageState extends State<ListingsPage> {
                 isGrid = !isGrid; // Görünümü değiştir
               });
             },
+            tooltip: isGrid ? 'Liste Görünümü' : 'Grid Görünümü',
           ),
         ],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF02aee7), Color(0xFF00d0ea)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -117,7 +131,10 @@ class _ListingsPageState extends State<ListingsPage> {
               onRefresh: refreshListings,
               child: cachedListings.isEmpty
                   ? const Center(
-                      child: Text('Bu kategoride henüz ilan bulunamadı.'),
+                      child: Text(
+                        'Bu kategoride henüz ilan bulunamadı.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
                     )
                   : isGrid
                       ? buildGridView()
@@ -132,9 +149,9 @@ class _ListingsPageState extends State<ListingsPage> {
       itemCount: cachedListings.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
+        crossAxisSpacing: 13,
+        mainAxisSpacing: 13,
+        childAspectRatio: 0.66,
       ),
       itemBuilder: (context, index) {
         final listing = cachedListings[index];
@@ -193,7 +210,7 @@ class ListingCard extends StatelessWidget {
       children: [
         buildImage(),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(12.0),
           child: buildInfo(),
         ),
       ],
@@ -204,14 +221,12 @@ class ListingCard extends StatelessWidget {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(12),
-          ),
+          borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
           child: buildImage(width: 120, height: 120),
         ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: buildInfo(),
           ),
         ),
@@ -221,7 +236,7 @@ class ListingCard extends StatelessWidget {
 
   Widget buildImage({double width = double.infinity, double height = 150}) {
     return CachedNetworkImage(
-      imageUrl: listing.imageUrl,
+      imageUrl: listing.imageUrl.isNotEmpty ? listing.imageUrl.first : '',
       width: width,
       height: height,
       fit: BoxFit.cover,
@@ -235,7 +250,7 @@ class ListingCard extends StatelessWidget {
         width: width,
         height: height,
         color: Colors.grey.shade300,
-        child: const Icon(Icons.image_not_supported),
+        child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
       ),
     );
   }
@@ -244,36 +259,62 @@ class ListingCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // İlan Başlığı
         Text(
           listing.title,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 18,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
+        // Fiyat
         Text(
           '${listing.price.toStringAsFixed(2)} ₺',
           style: const TextStyle(
             color: Colors.green,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
+        // İlan Türü
         Text(
-                        listing.listingType == ListingType.deposit
-                            ? 'Depolatmak'
-                            : 'Depolamak',
-                        style: TextStyle(
-                          color: listing.listingType == ListingType.deposit
-                              ? Colors.blue
-                              : Colors.orange,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+          listing.listingType == ListingType.deposit ? 'Depola' : 'Depolama',
+          style: TextStyle(
+            color: listing.listingType == ListingType.deposit
+                ? Colors.blue
+                : Colors.orange,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
+        ),
+        const SizedBox(height: 6),
+        // Lokasyon Bilgisi
+        if (listing.city != null && listing.district != null && listing.neighborhood != null)
+          Row(
+            children: [
+              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '${listing.neighborhood}, ${listing.district}, ${listing.city}',
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

@@ -28,6 +28,9 @@ class _ChatPageState extends State<ChatPage> {
   String otherUserName = 'Sohbet'; // Varsayılan başlık
   String otherUserPhotoUrl = ''; // Diğer kullanıcının profil fotoğrafı
 
+  // Kullanıcı verilerini önbelleğe almak için bir harita (Avatar kaldırıldığı için gereksiz olabilir)
+  final Map<String, UserModel> _userCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -71,9 +74,11 @@ class _ChatPageState extends State<ChatPage> {
       DocumentSnapshot<Map<String, dynamic>> userDoc =
           await _firestore.collection('users').doc(otherUserId).get();
       if (userDoc.exists) {
+        UserModel user = UserModel.fromDocument(userDoc);
         setState(() {
-          otherUserName = userDoc.data()?['displayName'] ?? 'Sohbet';
-          otherUserPhotoUrl = userDoc.data()?['photoURL'] ?? '';
+          otherUserName = user.displayName ?? 'Sohbet';
+          otherUserPhotoUrl = user.photoURL ?? '';
+          _userCache[otherUserId] = user; // Kullanıcı verisini önbelleğe ekle
         });
       } else {
         setState(() {
@@ -123,19 +128,22 @@ class _ChatPageState extends State<ChatPage> {
 
   /// Mesaj gönderildikten sonra listeyi aşağı kaydırır
   void _scrollToBottom() {
-    _scrollController.animateTo(
-      0.0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    // Hızlı kaydırma için jumpTo kullanabilirsiniz
+    _scrollController.jumpTo(0.0);
   }
 
   Future<UserModel?> getUserModelById(String userId) async {
+    if (_userCache.containsKey(userId)) {
+      return _userCache[userId];
+    }
+
     try {
       DocumentSnapshot<Map<String, dynamic>> doc =
           await FirebaseFirestore.instance.collection('users').doc(userId).get();
       if (doc.exists) {
-        return UserModel.fromDocument(doc);
+        UserModel user = UserModel.fromDocument(doc);
+        _userCache[userId] = user; // Kullanıcı verisini önbelleğe ekle
+        return user;
       } else {
         return null;
       }
@@ -190,84 +198,49 @@ class _ChatPageState extends State<ChatPage> {
             final createdAt = (messageData['createdAt'] as Timestamp?)?.toDate();
             final timeString = createdAt != null ? DateFormat('HH:mm').format(createdAt) : '';
 
-            return FutureBuilder<UserModel?>(
-              future: getUserModelById(messageData['senderId']),
-              builder: (context, userSnapshot) {
-                if (userSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                if (userSnapshot.hasError || !userSnapshot.hasData) {
-                  return const SizedBox.shrink();
-                }
+            final senderId = messageData['senderId'] as String;
+            final sender = _userCache[senderId];
 
-                final sender = userSnapshot.data!;
-
-                return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Row(
-                    mainAxisAlignment:
-                        isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (!isMe)
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundImage: sender.photoURL != null && sender.photoURL!.isNotEmpty
-                              ? CachedNetworkImageProvider(sender.photoURL!)
-                              : const AssetImage('assets/default_avatar.png') as ImageProvider,
-                        ),
-                      if (!isMe) const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isMe ? Colors.blueAccent : Colors.grey[300],
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(12),
-                            topRight: const Radius.circular(12),
-                            bottomLeft: Radius.circular(isMe ? 12 : 0),
-                            bottomRight: Radius.circular(isMe ? 0 : 12),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              messageData['text'] ?? '',
-                              style: TextStyle(
-                                color: isMe ? Colors.white : Colors.black87,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              timeString,
-                              style: TextStyle(
-                                color: isMe ? Colors.white70 : Colors.black54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isMe) const SizedBox(width: 8),
-                      if (isMe)
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundImage: sender.photoURL != null && sender.photoURL!.isNotEmpty
-                              ? CachedNetworkImageProvider(sender.photoURL!)
-                              : const AssetImage('assets/default_avatar.png') as ImageProvider,
-                        ),
-                    ],
+            Widget messageBubble = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.7,
+              ),
+              decoration: BoxDecoration(
+                color: isMe ? Colors.blueAccent : Colors.grey[300],
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(isMe ? 12 : 0),
+                  bottomRight: Radius.circular(isMe ? 0 : 12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment:
+                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    messageData['text'] ?? '',
+                    style: TextStyle(
+                      color: isMe ? Colors.white : Colors.black87,
+                      fontSize: 16,
+                    ),
                   ),
-                );
-              },
+                  const SizedBox(height: 4),
+                  Text(
+                    timeString,
+                    style: TextStyle(
+                      color: isMe ? Colors.white70 : Colors.black54,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            return Align(
+              alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+              child: messageBubble,
             );
           },
         );
@@ -313,53 +286,57 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ListingDetailPage(listing: widget.listing),
-                ),
-              );
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: widget.listing.imageUrl.isNotEmpty
-                  ? Image.network(widget.listing.imageUrl, width: 60, height: 60, fit: BoxFit.cover)
-                  : Image.asset('assets/default_listing.png', width: 60, height: 60),
+  return Padding(
+    padding: const EdgeInsets.all(10.0),
+    child: Row(
+      children: [
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ListingDetailPage(listing: widget.listing),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              widget.listing.imageUrl.first, // İlk resmi kullan
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.listing.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.listing.title,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(
-                  '${widget.listing.price.toStringAsFixed(2)} ₺',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.green,
-                  ),
+              ),
+              Text(
+                '${widget.listing.price.toStringAsFixed(2)} ₺',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.green,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

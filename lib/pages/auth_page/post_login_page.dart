@@ -17,62 +17,12 @@ class PostLoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.grey.shade200,
-        elevation: 0,
-        title: const Text(
-          'Depomla',
-          style: TextStyle(color: Colors.black, fontSize: 20),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            tooltip: 'Çıkış Yap',
-            onPressed: () async {
-              // Kullanıcıdan çıkış yapmayı onaylama
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Çıkış Yap'),
-                  content:
-                      const Text('Çıkış yapmak istediğinizden emin misiniz?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Hayır'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Evet'),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirm == true) {
-                // Firebase Auth'tan çıkış yap
-                await FirebaseAuth.instance.signOut();
-
-                // LoginPage'e yönlendir
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              }
-            },
-          ),
-        ],
-      ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 150.0),
         child: Column(
           children: [
             // Yatay Kaydırılabilir Carousel
             _buildCarouselSlider(),
-            const SizedBox(height: 20),
-            // "Hangisini Seçmeliyim?" Başlığı
-            _buildTitle(),
             const SizedBox(height: 20),
             // Seçenek Kartları
             Expanded(
@@ -295,27 +245,7 @@ class PostLoginPage extends StatelessWidget {
     );
   }
 
-  // "Hangisini Seçmeliyim?" Başlığını oluşturuyoruz
-  Widget _buildTitle() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: const Text(
-        'Hizmet Seçiniz',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.blue,
-        ),
-      ),
-    );
-  }
+
 
   // Seçenek Kartlarını oluşturuyoruz
   Widget _buildOptionCard({
@@ -332,7 +262,7 @@ class PostLoginPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(10), // Yuvarlak köşeler
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2), // Gölge rengi
+              color: Colors.grey.withOpacity(0.1), // Gölge rengi
               spreadRadius: 2,
               blurRadius: 5,
               offset: const Offset(0, 3), // Gölgenin pozisyonu

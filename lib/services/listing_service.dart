@@ -10,27 +10,29 @@ class ListingService {
 
   // İlan oluşturma
   Future<void> createListing(String title, String description, double price, String imageUrl, ListingType listingType) async {
-    try {
-      User? user = _auth.currentUser;
-      if (user == null) throw Exception('Kullanıcı oturum açmamış.');
+ // İlan oluşturma
+Future<void> createListing(String title, String description, double price, String imageUrl, ListingType listingType) async {
+  try {
+    User? user = _auth.currentUser;
+    if (user == null) throw Exception('Kullanıcı oturum açmamış.');
 
-      Listing newListing = Listing(
-        id: '',
-        title: title,
-        description: description,
-        price: price,
-        imageUrl: imageUrl,
-        userId: user.uid,
-        createdAt: Timestamp.now(),
-        listingType: listingType,
-      );
+    Listing newListing = Listing(
+      id: '',
+      title: title,
+      description: description,
+      price: price,
+      imageUrl: [imageUrl], // Wrap the single image URL in a list
+      userId: user.uid,
+      createdAt: Timestamp.now(),
+      listingType: listingType,
+    );
 
-      await _firestore.collection('listings').add(newListing.toMap());
-    } catch (e) {
-      print('İlan oluşturulurken hata: $e');
-      rethrow;
-    }
+    await _firestore.collection('listings').add(newListing.toMap());
+  } catch (e) {
+    print('İlan oluşturulurken hata: $e');
+    rethrow;
   }
+}
 
   // İlan güncelleme
   Future<void> updateListing(String listingId, String title, String description, double price, String imageUrl, ListingType listingType) async {
@@ -77,4 +79,5 @@ class ListingService {
       rethrow;
     }
   }
+}
 }
