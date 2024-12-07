@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:carousel_slider/carousel_slider.dart'; // Ensure you have the latest version
 import '../../models/listing_model.dart';
 import '../../models/user_model.dart';
+import '../auth_page/login_page.dart';
 import '../comment_page/chat_page.dart';
 import '../profil_page/user_profile_page.dart';
 import '../comment_page/full_screen_image_page.dart';
@@ -29,6 +31,9 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Color primaryColor = const Color(0xFF02aee7);
 
+  // For Carousel Indicator
+  int _currentImageIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -38,8 +43,10 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   /// İlan sahibinin bilgilerini Firestore'dan çeker.
   Future<void> _fetchListingUser() async {
     try {
-      DocumentSnapshot<Map<String, dynamic>> userDoc =
-          await _firestore.collection('users').doc(widget.listing.userId).get();
+      DocumentSnapshot<Map<String, dynamic>> userDoc = await _firestore
+          .collection('users')
+          .doc(widget.listing.userId)
+          .get(const GetOptions(source: Source.serverAndCache));
 
       if (userDoc.exists) {
         setState(() {
@@ -60,59 +67,109 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
     }
   }
 
-  /// Sohbet başlatma işlemi.
   Future<void> _startChat() async {
-    final currentUser = _auth.currentUser;
+  final currentUser = _auth.currentUser;
 
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Mesaj göndermek için giriş yapmalısınız.')),
-      );
-      return;
-    }
-
-    if (listingUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İlan sahibi bulunamadı.')),
-      );
-      return;
-    }
-
-    if (currentUser.uid == listingUser!.uid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kendi ilanınıza mesaj gönderemezsiniz.')),
-      );
-      return;
-    }
-
-    // Benzersiz sohbet ID'si oluştur: Kullanıcı UID'leri + İlan ID
-    String chatId =
-        '${currentUser.uid}_${listingUser!.uid}_${widget.listing.id}';
-
-    final chatRef = _firestore.collection('chats').doc(chatId);
-
-    final chatDoc = await chatRef.get();
-
-    // Eğer sohbet daha önce başlatılmamışsa, oluştur
-    if (!chatDoc.exists) {
-      await chatRef.set({
-        'id': chatId,
-        'participants': [currentUser.uid, listingUser!.uid],
-        'listingId': widget.listing.id,
-        'listingTitle': widget.listing.title,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-
-    // Sohbet sayfasına yönlendir
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatPage(chatId: chatId, listing: widget.listing),
+  if (currentUser == null) {
+    // Kullanıcı giriş yapmamışsa daha güzel bir diyalog göster
+    bool shouldLogin = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Giriş Yapmanız Gerekli',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Mesaj göndermek için hesabınıza giriş yapmanız gerekiyor. Giriş yapmak ister misiniz?',
+              style: TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            const Icon(Icons.login, size: 50, color: Colors.blue),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceAround,
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false); // Kullanıcı iptal etti
+            },
+            child: const Text(
+              'Vazgeç',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true); // Kullanıcı giriş yapmak istedi
+            },
+            child: const Text(
+              'Giriş Yap',
+              style: TextStyle(color: Colors.blueAccent),
+            ),
+          ),
+        ],
       ),
     );
+
+    if (shouldLogin) {
+      // Kullanıcı giriş yapmak istiyorsa, LoginPage'e yönlendir
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
+
+    return; // Fonksiyonu burada sonlandır
   }
+
+  if (listingUser == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('İlan sahibi bulunamadı.')),
+    );
+    return;
+  }
+
+  if (currentUser.uid == listingUser!.uid) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Kendi ilanınıza mesaj gönderemezsiniz.')),
+    );
+    return;
+  }
+
+  // Benzersiz sohbet ID'si oluştur: Kullanıcı UID'leri + İlan ID
+  String chatId =
+      '${currentUser.uid}_${listingUser!.uid}_${widget.listing.id}';
+
+  final chatRef = _firestore.collection('chats').doc(chatId);
+
+  final chatDoc = await chatRef.get();
+
+  // Eğer sohbet daha önce başlatılmamışsa, oluştur
+  if (!chatDoc.exists) {
+    await chatRef.set({
+      'id': chatId,
+      'participants': [currentUser.uid, listingUser!.uid],
+      'listingId': widget.listing.id,
+      'listingTitle': widget.listing.title,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Sohbet sayfasına yönlendir
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) =>
+          ChatPage(chatId: chatId, listing: widget.listing),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +178,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
       appBar: AppBar(
         title: Text(
           widget.listing.title,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, color: Colors.white),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -146,7 +204,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               ? Center(
                   child: Text(
                     errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 18),
+                    style: const TextStyle(
+                        color: Colors.red, fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
                 )
@@ -159,7 +218,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                     Expanded(
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -177,7 +237,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                               _buildAdditionalDetails(),
                               const SizedBox(height: 30),
                               // İlan Sahibi Bilgileri
-                              if (listingUser != null) _buildListingUserInfo(),
+                              if (listingUser != null)
+                                _buildListingUserInfo(),
                               const SizedBox(height: 30),
                             ],
                           ),
@@ -193,80 +254,124 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
 
   /// Çoklu ilan görsellerini gösteren widget (Carousel Slider kullanılarak).
   Widget _buildListingImages() {
-    return Stack(
+    return Column(
       children: [
-        widget.listing.imageUrl.isNotEmpty
-            ? CarouselSlider(
-                options: CarouselOptions(
-                  height: 300.0,
-                  enableInfiniteScroll: false,
-                  enlargeCenterPage: true,
-                  viewportFraction: 1.0,
-                ),
-                items: widget.listing.imageUrl.map((imageUrl) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Görsel tıklandığında tam ekran göster
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FullScreenImagePage(imageUrl: imageUrl),
+        Stack(
+          children: [
+            widget.listing.imageUrl.isNotEmpty
+                ? CarouselSlider(
+                    options: CarouselOptions(
+                      height: 300.0,
+                      enableInfiniteScroll: false,
+                      enlargeCenterPage: true,
+                      viewportFraction: 1.0,
+                      onPageChanged: (index, reason) {
+                        setState(() {
+                          _currentImageIndex = index;
+                        });
+                      },
+                    ),
+                    items: widget.listing.imageUrl.map((imageUrl) {
+                      return GestureDetector(
+                        onTap: () {
+                          // Görsel tıklandığında tam ekran göster
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  FullScreenImagePage(imageUrl: imageUrl),
+                            ),
+                          );
+                        },
+                        child: Hero(
+                          tag: 'listingImage_${widget.listing.id}_$imageUrl',
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            width: double.infinity,
+                            height: 300,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: double.infinity,
+                              height: 300,
+                              color: Colors.grey.shade300,
+                              child: const Center(
+                                  child: CircularProgressIndicator()),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                Container(
+                              width: double.infinity,
+                              height: 300,
+                              color: Colors.grey.shade300,
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey,
+                                size: 80,
+                              ),
+                            ),
+                          ),
                         ),
                       );
-                    },
-                    child: Hero(
-                      tag: 'listingImage_${widget.listing.id}_$imageUrl',
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        width: double.infinity,
-                        height: 300,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          width: double.infinity,
-                          height: 300,
-                          color: Colors.grey.shade300,
-                          child: const Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          width: double.infinity,
-                          height: 300,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.image_not_supported,
-                              color: Colors.grey, size: 80),
-                        ),
+                    }).toList(),
+                  )
+                : Container(
+                    height: 300,
+                    color: Colors.grey.shade200,
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        size: 80,
+                        color: Colors.grey,
                       ),
                     ),
-                  );
-                }).toList(),
-              )
-            : Container(
-                height: 300,
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: Icon(
-                    Icons.image_not_supported,
-                    size: 80,
-                    color: Colors.grey,
                   ),
+            // Favori Butonu (Opsiyonel)
+            Positioned(
+              top: 40,
+              right: 16,
+              child: CircleAvatar(
+                backgroundColor: Colors.white.withOpacity(0.9),
+                child: IconButton(
+                  icon: const Icon(Icons.favorite_border,
+                      color: Colors.redAccent),
+                  onPressed: () {
+                    // Favori işlemleri
+                    _toggleFavorite();
+                  },
                 ),
               ),
-        // Favori Butonu (Opsiyonel)
-        Positioned(
-          top: 40,
-          right: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.white.withOpacity(0.9),
-            child: IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.redAccent),
-              onPressed: () {
-                // Favori işlemleri
-                _toggleFavorite();
-              },
             ),
-          ),
+          ],
         ),
+        // Carousel Indicators
+        if (widget.listing.imageUrl.length > 1)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: widget.listing.imageUrl.asMap().entries.map((entry) {
+              return GestureDetector(
+                onTap: () => _carouselJumpTo(entry.key),
+                child: Container(
+                  width: 12.0,
+                  height: 12.0,
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentImageIndex == entry.key
+                        ? primaryColor
+                        : Colors.grey,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
       ],
     );
+  }
+
+  /// Method to jump to a specific carousel image
+  void _carouselJumpTo(int index) {
+    // You need to keep a reference to CarouselController
+    // Implement if needed
   }
 
   /// İlan başlığı ve fiyatını gösteren widget.
@@ -285,7 +390,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
         ),
         const SizedBox(width: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
@@ -307,7 +413,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   void _toggleFavorite() {
     // Favori ekleme/çıkarma işlemleri burada yapılabilir.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Favori işlemi henüz uygulanmadı.')),
+      const SnackBar(
+          content: Text('Favori işlemi henüz uygulanmadı.')),
     );
   }
 
@@ -337,7 +444,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
         const SizedBox(width: 6),
         Text(
           _formatDate(widget.listing.createdAt.toDate()),
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
+          style:
+              const TextStyle(fontSize: 16, color: Colors.grey),
         ),
       ],
     );
@@ -383,7 +491,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               const SizedBox(width: 6),
               Text(
                 '${widget.listing.size} m²',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(
+                    fontSize: 16, color: Colors.black87),
               ),
             ],
           ),
@@ -397,7 +506,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               const SizedBox(width: 6),
               Text(
                 widget.listing.storageType!,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(
+                    fontSize: 16, color: Colors.black87),
               ),
             ],
           ),
@@ -422,7 +532,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                     .where((entry) => entry.value)
                     .map((entry) => Chip(
                           label: Text(entry.key),
-                          backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                          backgroundColor:
+                              Colors.blueAccent.withOpacity(0.1),
                         ))
                     .toList(),
               ),
@@ -438,7 +549,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               const SizedBox(width: 6),
               Text(
                 'Başlangıç: ${widget.listing.startDate}',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(
+                    fontSize: 16, color: Colors.black87),
               ),
             ],
           ),
@@ -452,7 +564,8 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               const SizedBox(width: 6),
               Text(
                 'Bitiş: ${widget.listing.endDate}',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(
+                    fontSize: 16, color: Colors.black87),
               ),
             ],
           ),
@@ -484,11 +597,12 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
             children: [
               CircleAvatar(
                 radius: 24, // Daha küçük bir radius
-                backgroundImage: listingUser!.photoURL != null &&
-                        listingUser!.photoURL!.isNotEmpty
-                    ? NetworkImage(listingUser!.photoURL!)
-                    : const AssetImage('assets/default_avatar.png')
-                        as ImageProvider,
+                backgroundImage:
+                    listingUser!.photoURL != null &&
+                            listingUser!.photoURL!.isNotEmpty
+                        ? NetworkImage(listingUser!.photoURL!)
+                        : const AssetImage('assets/default_avatar.png')
+                            as ImageProvider,
               ),
               const SizedBox(width: 10), // Boşluk biraz azaltıldı
               Expanded(
@@ -500,8 +614,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                           ? listingUser!.displayName
                           : 'Kullanıcı',
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold), // Font boyutu küçültüldü
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 3), // Boşluk biraz azaltıldı
                     Text(
@@ -510,7 +623,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                           : 'Email bulunmamaktadır.',
                       style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600]), // Font boyutu küçültüldü
+                          color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -533,16 +646,16 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
         currentUser != null && currentUser.uid == listingUser?.uid;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: Colors.white,
       child: SafeArea(
         top: false,
         child: ElevatedButton(
-          onPressed: isOwnListing
-              ? null // Kendi ilanına mesaj gönderilemez
-              : _startChat,
+          onPressed: isOwnListing ? null : _startChat,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isOwnListing ? Colors.grey : primaryColor,
+            backgroundColor:
+                isOwnListing ? Colors.grey : primaryColor,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

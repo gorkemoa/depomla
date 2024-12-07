@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/listing_model.dart';
+import 'listing_card.dart';
 import 'listings_details_page.dart';
 
 class ListingsPage extends StatefulWidget {
@@ -19,6 +20,9 @@ class _ListingsPageState extends State<ListingsPage> {
   List<Listing> cachedListings = [];
   bool isGrid = true; // Başlangıç görünümü grid
   bool isLoading = true;
+  bool isLoadingMore = false; // Daha fazla veri yükleniyor mu?
+  DocumentSnapshot? lastDocument; // Son getirilen belge
+  bool hasMoreData = true; // Daha fazla veri var mı?
 
   @override
   void initState() {
@@ -34,49 +38,37 @@ class _ListingsPageState extends State<ListingsPage> {
   }
 
   Future<void> fetchListings({bool forceRefresh = false}) async {
+    if (isLoadingMore || !hasMoreData) return; // Aynı anda birden fazla yüklemeyi ve gereksiz sorguları önleyin
+
     setState(() {
-      isLoading = true;
+      isLoading = lastDocument == null;
+      isLoadingMore = lastDocument != null;
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
+      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+          .collection('listings')
+          .where('listingType', isEqualTo: widget.category.toString().split('.').last)
+          .orderBy('createdAt', descending: true)
+          .limit(20);
 
-      if (forceRefresh) {
-        // Sunucudan güncel verileri al ve önbelleği güncelle
-        snapshot = await FirebaseFirestore.instance
-            .collection('listings')
-            .where('listingType', isEqualTo: widget.category.toString().split('.').last)
-            .orderBy('createdAt', descending: true)
-            .get(const GetOptions(source: Source.server));
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument!);
+      }
 
+      QuerySnapshot<Map<String, dynamic>> snapshot = await query.get(
+        forceRefresh ? const GetOptions(source: Source.server) : null,
+      );
+
+      if (snapshot.docs.isNotEmpty) {
         setState(() {
-          cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+          lastDocument = snapshot.docs.last;
+          cachedListings.addAll(snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList());
         });
       } else {
-        // Önce önbellekten veri almaya çalış
-        snapshot = await FirebaseFirestore.instance
-            .collection('listings')
-            .where('listingType', isEqualTo: widget.category.toString().split('.').last)
-            .orderBy('createdAt', descending: true)
-            .get(const GetOptions(source: Source.cache));
-
-        if (snapshot.docs.isEmpty) {
-          // Önbellek boşsa sunucudan veri al
-          snapshot = await FirebaseFirestore.instance
-              .collection('listings')
-              .where('listingType', isEqualTo: widget.category.toString().split('.').last)
-              .orderBy('createdAt', descending: true)
-              .get();
-
-          setState(() {
-            cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
-          });
-        } else {
-          // Önbellekteki verileri kullan
-          setState(() {
-            cachedListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
-          });
-        }
+        setState(() {
+          hasMoreData = false;
+        });
       }
     } catch (e) {
       print('Veri alınırken hata oluştu: $e');
@@ -86,12 +78,18 @@ class _ListingsPageState extends State<ListingsPage> {
     } finally {
       setState(() {
         isLoading = false;
+        isLoadingMore = false;
       });
     }
   }
 
   Future<void> refreshListings() async {
-    // Kullanıcı yenileme yaptığında sunucudan güncel verileri alır
+    // Kullanıcı yenileme yaptığında verileri sıfırla ve sunucudan güncel verileri al
+    setState(() {
+      cachedListings.clear();
+      lastDocument = null;
+      hasMoreData = true;
+    });
     await fetchListings(forceRefresh: true);
   }
 
@@ -129,193 +127,63 @@ class _ListingsPageState extends State<ListingsPage> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: refreshListings,
-              child: cachedListings.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Bu kategoride henüz ilan bulunamadı.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : isGrid
-                      ? buildGridView()
-                      : buildListView(),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (!isLoadingMore &&
+                      hasMoreData &&
+                      scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+                    // Liste sonuna yaklaşıldı, daha fazla veri yükle
+                    fetchListings();
+                  }
+                  return false;
+                },
+                child: cachedListings.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Bu kategoride henüz ilan bulunamadı.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ),
+                      )
+                    : buildListView(),
+              ),
             ),
     );
   }
 
-  Widget buildGridView() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(8.0),
-      itemCount: cachedListings.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 13,
-        mainAxisSpacing: 13,
-        childAspectRatio: 0.66,
-      ),
-      itemBuilder: (context, index) {
-        final listing = cachedListings[index];
-        return ListingCard(listing: listing);
-      },
-    );
-  }
-
   Widget buildListView() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(8.0),
-      itemCount: cachedListings.length,
-      itemBuilder: (context, index) {
-        final listing = cachedListings[index];
-        return ListingCard(listing: listing, isList: true);
-      },
-    );
-  }
-}
-
-class ListingCard extends StatelessWidget {
-  final Listing listing;
-  final bool isList;
-
-  const ListingCard({
-    Key? key,
-    required this.listing,
-    this.isList = false,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Detay sayfasına yönlendirme
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ListingDetailPage(listing: listing),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+    if (isGrid) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: cachedListings.length + (hasMoreData ? 1 : 0),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 3,
+          crossAxisSpacing: 13,
+          mainAxisSpacing: 13,
+          childAspectRatio: 0.70,
         ),
-        child: isList ? buildListContent() : buildGridContent(),
-      ),
-    );
-  }
-
-  Widget buildGridContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        buildImage(),
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: buildInfo(),
-        ),
-      ],
-    );
-  }
-
-  Widget buildListContent() {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-          child: buildImage(width: 120, height: 120),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: buildInfo(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget buildImage({double width = double.infinity, double height = 150}) {
-    return CachedNetworkImage(
-      imageUrl: listing.imageUrl.isNotEmpty ? listing.imageUrl.first : '',
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Container(
-        width: width,
-        height: height,
-        color: Colors.grey.shade300,
-        child: const Center(child: CircularProgressIndicator()),
-      ),
-      errorWidget: (context, url, error) => Container(
-        width: width,
-        height: height,
-        color: Colors.grey.shade300,
-        child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
-      ),
-    );
-  }
-
-  Widget buildInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // İlan Başlığı
-        Text(
-          listing.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
-        ),
-        const SizedBox(height: 6),
-        // Fiyat
-        Text(
-          '${listing.price.toStringAsFixed(2)} ₺',
-          style: const TextStyle(
-            color: Colors.green,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
-        ),
-        const SizedBox(height: 6),
-        // İlan Türü
-        Text(
-          listing.listingType == ListingType.deposit ? 'Depola' : 'Depolama',
-          style: TextStyle(
-            color: listing.listingType == ListingType.deposit
-                ? Colors.blue
-                : Colors.orange,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
-        ),
-        const SizedBox(height: 6),
-        // Lokasyon Bilgisi
-        if (listing.city != null && listing.district != null && listing.neighborhood != null)
-          Row(
-            children: [
-              const Icon(Icons.location_on, size: 16, color: Colors.grey),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '${listing.neighborhood}, ${listing.district}, ${listing.city}',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis, // Uzun metinleri kesmek için eklendi
-                ),
-              ),
-            ],
-          ),
-      ],
-    );
+        itemBuilder: (context, index) {
+          if (index == cachedListings.length) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final listing = cachedListings[index];
+          return ListingCard(listing: listing);
+        },
+      );
+    } else {
+      return ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: cachedListings.length + (hasMoreData ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == cachedListings.length) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final listing = cachedListings[index];
+          return ListingCard(listing: listing, isList: true);
+        },
+      );
+    }
   }
 }

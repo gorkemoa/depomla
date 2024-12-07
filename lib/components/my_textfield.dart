@@ -15,6 +15,7 @@ final bool obscureText;
       child: TextField(
         controller:  controller,
         obscureText: obscureText,
+        
         decoration: InputDecoration(
             enabledBorder:
                 OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),

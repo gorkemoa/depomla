@@ -120,6 +120,17 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+       appBar: AppBar(
+        title: const Text('Giriş Yap'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Geri dönüş işlemi
+          },
+        ),
+      backgroundColor: const Color.fromARGB(255, 132, 186, 237),
+        elevation: 0,
+      ),
       backgroundColor: const Color.fromARGB(255, 132, 186, 237),
       body: SafeArea(
         child: Center(
@@ -183,20 +194,20 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Divider(
                         thickness: 1,
-                        color: Colors.grey[700],
+                        color: const Color.fromARGB(190, 12, 133, 52),
                       ),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
                         "veya",
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Color.fromARGB(255, 59, 56, 56)),
                       ),
                     ),
                     Expanded(
                       child: Divider(
                         thickness: 1,
-                        color: Colors.grey[700],
+                        color: const Color.fromARGB(190, 12, 133, 52),
                       ),
                     ),
                   ],

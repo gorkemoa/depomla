@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:depomla/models/listing_model.dart';
 import 'package:depomla/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -11,13 +12,13 @@ import 'package:depomla/pages/auth_page/auth_page.dart';
 import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:depomla/pages/auth_page/login_page.dart';
 import 'package:depomla/pages/profil_page/profile_page.dart';
+import 'package:depomla/pages/listing_page/listings_page.dart'; // İlanları gösteren sayfa
 import 'package:depomla/services/auth_service.dart';
 import 'dart:io' show Platform;
 
 import 'providers/user_provider.dart'; // Platform kontrolü için ekleme
 
 Future<void> main() async {
-  
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Firebase başlatılıyor
 
@@ -57,6 +58,11 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        StreamProvider<User?>.value(
+          value: AuthService().authStateChanges(),
+          initialData: null,
+          catchError: (context, error) => null,
+        ),
       ],
       child: const DepomlaApp(),
     ),
@@ -86,24 +92,36 @@ class DepomlaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamProvider<User?>.value(
-      value: AuthService().authStateChanges(),
-      initialData: null,
-      catchError: (context, error) => null,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Depomla',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: const AuthPage(),
-        routes: {
-          '/login': (context) => const LoginPage(),
-          '/profile': (context) => const ProfilePage(),
-          '/home': (context) => const PostLoginPage(),
-          '/notifications': (context) =>  NotificationsPage(),
-        },
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Depomla',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      home: const PostLoginPage(), // Direkt PostLoginPage açılıyor
+      onGenerateRoute: (settings) {
+        if (settings.name == '/listings') {
+          final args = settings.arguments as ListingType;
+          return MaterialPageRoute(
+            builder: (context) {
+              return ListingsPage(category: args);
+            },
+          );
+        }
+        // Diğer route tanımlamaları
+        switch (settings.name) {
+          case '/login':
+            return MaterialPageRoute(builder: (context) => const LoginPage());
+          case '/profile':
+            return MaterialPageRoute(builder: (context) => const ProfilePage());
+          case '/home':
+            return MaterialPageRoute(builder: (context) => const PostLoginPage());
+          case '/notifications':
+            return MaterialPageRoute(builder: (context) => NotificationsPage());
+          default:
+            return MaterialPageRoute(builder: (context) => const ListingsPage(category: ListingType.deposit));
+        }
+      },
     );
   }
 }

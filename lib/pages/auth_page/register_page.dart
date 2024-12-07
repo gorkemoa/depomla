@@ -1,11 +1,10 @@
+// lib/pages/auth_page/register_page.dart
 import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:depomla/services/auth_service.dart';
-import 'package:depomla/pages/home_page.dart';
 import 'package:depomla/components/my_button.dart';
 import 'package:depomla/components/my_textfield.dart';
-
 import '../../components/square_tile.dart';
 import 'login_page.dart';
 
@@ -20,17 +19,30 @@ class _RegisterPageState extends State<RegisterPage> {
   // Kontrolleri başlatma
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController displayNameController = TextEditingController();
 
   // Kayıt olma fonksiyonu
   Future<void> signUpUser() async {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
+    String confirmPassword = confirmPasswordController.text.trim();
     String displayName = displayNameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || displayName.isEmpty) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty ||
+        displayName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Şifreler eşleşmiyor.')),
       );
       return;
     }
@@ -87,26 +99,45 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     displayNameController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Ekran boyutlarını almak için
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
+      // Arka plan rengini değiştirebilirsiniz
       backgroundColor: const Color.fromARGB(255, 132, 186, 237),
+      appBar: AppBar(
+        title: const Text('Kayıt Ol'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Geri dönüş işlemi
+          },
+        ),
+      backgroundColor: const Color.fromARGB(255, 132, 186, 237),
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Logo
-                Image.asset(
-                  'assets/depomla.png',
-                  width: 400,
-                  height: 300,
+                SizedBox(
+                  width: size.width * 0.6,
+                  child: Image.asset(
+                    'assets/depomla.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 // Kullanıcı Adı Girişi
@@ -130,6 +161,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 20),
+                // Şifre Tekrar Girişi
+                MyTextfield(
+                  controller: confirmPasswordController,
+                  hintText: 'Şifre Tekrar',
+                  obscureText: true,
+                ),
+                const SizedBox(height: 30),
                 // Kayıt Ol Butonu
                 MyButton(
                   onTap: signUpUser,
@@ -143,25 +181,25 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 30),
                 // Veya
-                Row(
+                 Row(
                   children: [
                     Expanded(
                       child: Divider(
                         thickness: 1,
-                        color: Colors.grey[700],
+                        color: const Color.fromARGB(190, 12, 133, 52),
                       ),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
                         "veya",
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Color.fromARGB(255, 59, 56, 56)),
                       ),
                     ),
                     Expanded(
                       child: Divider(
                         thickness: 1,
-                        color: Colors.grey[700],
+                        color: const Color.fromARGB(190, 12, 133, 52),
                       ),
                     ),
                   ],
@@ -179,12 +217,14 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (user != null) {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => const PostLoginPage()),
+                            MaterialPageRoute(
+                                builder: (context) => const PostLoginPage()),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Giriş başarısız veya iptal edildi.')),
+                                content:
+                                    Text('Giriş başarısız veya iptal edildi.')),
                           );
                         }
                       },
@@ -203,7 +243,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       onTap: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
                         );
                       },
                       child: Text(
@@ -217,6 +258,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
