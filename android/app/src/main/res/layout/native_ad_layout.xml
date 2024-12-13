@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.gms.ads.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+
+    <!-- Başlık -->
+    <TextView
+        android:id="@+id/adHeadline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ad Headline"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="5dp"/>
+
+    <!-- Görsel -->
+    <ImageView
+        android:id="@+id/adImage"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="5dp"/>
+
+    <!-- Açıklama -->
+    <TextView
+        android:id="@+id/adBody"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ad Description"
+        android:textSize="14sp"
+        android:layout_marginBottom="5dp"/>
+
+    <!-- Call to Action -->
+    <Button
+        android:id="@+id/adCallToAction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Install"
+        android:background="@color/design_default_color_primary"
+        android:textColor="@android:color/white"/>
+
+</com.google.android.gms.ads.nativead.NativeAdView>
