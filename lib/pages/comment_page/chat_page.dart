@@ -25,10 +25,10 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String otherUserName = 'Sohbet'; // Varsayılan başlık
-  String otherUserPhotoUrl = ''; // Diğer kullanıcının profil fotoğrafı
+  String otherUserName = 'Sohbet';
+  String otherUserPhotoUrl = '';
+  String otherUserId = ''; // Diğer kullanıcının ID'si
 
-  // Kullanıcı verilerini önbelleğe almak için bir harita (Avatar kaldırıldığı için gereksiz olabilir)
   final Map<String, UserModel> _userCache = {};
 
   @override
@@ -38,7 +38,6 @@ class _ChatPageState extends State<ChatPage> {
     _fetchOtherUserData();
   }
 
-  /// Okunmamış mesajları "okundu" olarak işaretler
   Future<void> _markMessagesAsRead() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -48,37 +47,43 @@ class _ChatPageState extends State<ChatPage> {
         .doc(widget.chatId)
         .collection('messages')
         .where('isRead', isEqualTo: false)
+        .where('receiverId', isEqualTo: currentUser.uid) // Eklenmiş alan
         .get();
 
+    WriteBatch batch = _firestore.batch();
+
     for (var doc in unreadMessages.docs) {
-      await doc.reference.update({'isRead': true});
+      batch.update(doc.reference, {'isRead': true});
     }
+
+    await batch.commit();
   }
 
-  /// Diğer kullanıcının adını ve profil fotoğrafını alır
   Future<void> _fetchOtherUserData() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    // 'participants' alanının bir liste olduğunu varsayıyoruz
     final chatDoc = await _firestore.collection('chats').doc(widget.chatId).get();
     if (!chatDoc.exists) return;
 
     List<dynamic> participants = chatDoc.data()?['participants'] ?? [];
-    // Mevcut kullanıcının ID'sini listeden çıkararak diğer kullanıcının ID'sini buluyoruz
-    String otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => '');
+    String fetchedOtherUserId = participants.firstWhere(
+      (id) => id != currentUser.uid,
+      orElse: () => '',
+    );
 
-    if (otherUserId.isEmpty) return;
+    if (fetchedOtherUserId.isEmpty) return;
 
     try {
       DocumentSnapshot<Map<String, dynamic>> userDoc =
-          await _firestore.collection('users').doc(otherUserId).get();
+          await _firestore.collection('users').doc(fetchedOtherUserId).get();
       if (userDoc.exists) {
         UserModel user = UserModel.fromDocument(userDoc);
         setState(() {
+          otherUserId = fetchedOtherUserId; // Diğer kullanıcının ID'sini sakla
           otherUserName = user.displayName ?? 'Sohbet';
           otherUserPhotoUrl = user.photoURL ?? '';
-          _userCache[otherUserId] = user; // Kullanıcı verisini önbelleğe ekle
+          _userCache[otherUserId] = user;
         });
       } else {
         setState(() {
@@ -93,8 +98,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  /// Mesaj gönderir ve "lastMessageTime" alanını günceller
-  Future<void> _sendMessage() async {
+  Future<void> _sendMessage({String? listingId}) async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
@@ -103,22 +107,39 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty && listingId == null) return;
+
+    Map<String, dynamic> messageData = {
+      'senderId': currentUser.uid,
+      'receiverId': otherUserId, // Alıcı ID'si
+      'createdAt': FieldValue.serverTimestamp(),
+      'isRead': false,
+    };
+
+    if (listingId != null) {
+      messageData['type'] = 'listing';
+      messageData['listingId'] = listingId;
+    } else {
+      messageData['text'] = text;
+      messageData['type'] = 'text';
+    }
 
     try {
-      await _firestore.collection('chats').doc(widget.chatId).collection('messages').add({
-        'text': text,
-        'senderId': currentUser.uid,
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      await _firestore
+          .collection('chats')
+          .doc(widget.chatId)
+          .collection('messages')
+          .add(messageData);
 
       await _firestore.collection('chats').doc(widget.chatId).update({
         'lastMessageTime': FieldValue.serverTimestamp(),
-        'isHidden': false, // Sohbeti görünür yap
+        'isHidden': false,
       });
 
-      _messageController.clear();
+      if (listingId == null) {
+        _messageController.clear();
+      }
+
       _scrollToBottom();
     } catch (e) {
       print('Mesaj gönderilirken hata: $e');
@@ -126,10 +147,14 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  /// Mesaj gönderildikten sonra listeyi aşağı kaydırır
   void _scrollToBottom() {
-    // Hızlı kaydırma için jumpTo kullanabilirsiniz
-    _scrollController.jumpTo(0.0);
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<UserModel?> getUserModelById(String userId) async {
@@ -142,7 +167,7 @@ class _ChatPageState extends State<ChatPage> {
           await FirebaseFirestore.instance.collection('users').doc(userId).get();
       if (doc.exists) {
         UserModel user = UserModel.fromDocument(doc);
-        _userCache[userId] = user; // Kullanıcı verisini önbelleğe ekle
+        _userCache[userId] = user;
         return user;
       } else {
         return null;
@@ -198,45 +223,161 @@ class _ChatPageState extends State<ChatPage> {
             final createdAt = (messageData['createdAt'] as Timestamp?)?.toDate();
             final timeString = createdAt != null ? DateFormat('HH:mm').format(createdAt) : '';
 
-            final senderId = messageData['senderId'] as String;
-            final sender = _userCache[senderId];
+            Widget messageBubble;
 
-            Widget messageBubble = Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.7,
-              ),
-              decoration: BoxDecoration(
-                color: isMe ? Colors.blueAccent : Colors.grey[300],
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(12),
-                  topRight: const Radius.circular(12),
-                  bottomLeft: Radius.circular(isMe ? 12 : 0),
-                  bottomRight: Radius.circular(isMe ? 0 : 12),
+            if (messageData['type'] == 'listing' && messageData['listingId'] != null) {
+              String listingId = messageData['listingId'];
+              messageBubble = FutureBuilder<Listing?>(
+                future: _fetchListingById(listingId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isMe ? Colors.blueAccent : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isMe ? Colors.blueAccent : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'İlan yüklenemedi.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+
+                  final listing = snapshot.data!;
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ListingDetailPage(listing: listing),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isMe ? Colors.blueAccent : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: listing.imageUrl.first,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.image, color: Colors.white70),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.broken_image, color: Colors.white70),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  listing.title,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: isMe ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  '${listing.price.toStringAsFixed(2)} ₺',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: isMe ? Colors.white70 : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: isMe ? Colors.white70 : Colors.grey,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            } else {
+              messageBubble = Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    messageData['text'] ?? '',
-                    style: TextStyle(
-                      color: isMe ? Colors.white : Colors.black87,
-                      fontSize: 16,
-                    ),
+                decoration: BoxDecoration(
+                  color: isMe ? Colors.blueAccent : Colors.grey[300],
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(12),
+                    topRight: const Radius.circular(12),
+                    bottomLeft: Radius.circular(isMe ? 12 : 0),
+                    bottomRight: Radius.circular(isMe ? 0 : 12),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    timeString,
-                    style: TextStyle(
-                      color: isMe ? Colors.white70 : Colors.black54,
-                      fontSize: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      messageData['text'] ?? '',
+                      style: TextStyle(
+                        color: isMe ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
+                    const SizedBox(height: 4),
+                    Text(
+                      timeString,
+                      style: TextStyle(
+                        color: isMe ? Colors.white70 : Colors.black54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
 
             return Align(
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -244,137 +385,322 @@ class _ChatPageState extends State<ChatPage> {
             );
           },
         );
-      },
-    );
-  }
+    });
 
-  Widget _buildMessageInput() {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        color: Colors.white,
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(24),
+      }Future<Listing?> _fetchListingById(String listingId) async {
+        try {
+          DocumentSnapshot<Map<String, dynamic>> doc =
+              await _firestore.collection('listings').doc(listingId).get();
+          if (doc.exists) {
+            return Listing.fromDocument(doc);
+          }
+          return null;
+        } catch (e) {
+          print('İlan getirirken hata: $e');
+          return null;
+        }
+      }
+
+          void _openListingPicker() async {
+        final selectedListing = await showModalBottomSheet<Listing>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => const ListingPickerBottomSheet(),
+        );
+
+        if (selectedListing != null) {
+          _sendMessage(listingId: selectedListing.id);
+        }
+      }
+
+      Widget _buildMessageInput() {
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            color: Colors.white,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.insert_drive_file, color: Colors.blueAccent),
+                  onPressed: _openListingPicker,
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: 'Mesaj yazın...',
-                    border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: 'Mesaj yazın...',
+                        border: InputBorder.none,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FloatingActionButton(
+                  onPressed: () => _sendMessage(),
+                  mini: true,
+                  backgroundColor: Colors.blueAccent,
+                  child: const Icon(Icons.send, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      Widget _buildHeader() {
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ListingDetailPage(listing: widget.listing),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.listing.imageUrl.first,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 40,
+                      height: 40,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.image, color: Colors.white70),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 40,
+                      height: 40,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.broken_image, color: Colors.white70),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton(
-              onPressed: _sendMessage,
-              mini: true,
-              backgroundColor: Colors.blueAccent,
-              child: const Icon(Icons.send, color: Colors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildHeader() {
-  return Padding(
-    padding: const EdgeInsets.all(10.0),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ListingDetailPage(listing: widget.listing),
-              ),
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              widget.listing.imageUrl.first, // İlk resmi kullan
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.listing.title,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${widget.listing.price.toStringAsFixed(2)} ₺',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.green,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.listing.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${widget.listing.price.toStringAsFixed(2)} ₺',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-      ],
-    ),
-  );
-}
+        );
+      }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100], // Arka plan rengini hafif gri yaparak kontrast oluşturduk
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (otherUserPhotoUrl.isNotEmpty)
-              CircleAvatar(
-                backgroundImage: CachedNetworkImageProvider(otherUserPhotoUrl),
-              )
-            else
-              const CircleAvatar(
-                backgroundImage: AssetImage('assets/default_avatar.png'),
-              ),
-            const SizedBox(width: 10),
-            Text(
-              otherUserName,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          backgroundColor: Colors.grey[100],
+          appBar: AppBar(
+            title: Row(
+              children: [
+                if (otherUserPhotoUrl.isNotEmpty)
+                  CircleAvatar(
+                    backgroundImage: CachedNetworkImageProvider(otherUserPhotoUrl),
+                  )
+                else
+                  const CircleAvatar(
+                    backgroundImage: AssetImage('assets/default_avatar.png'),
+                  ),
+                const SizedBox(width: 10),
+                Text(
+                  otherUserName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        backgroundColor: Colors.blueAccent, // Daha parlak bir mavi tonu
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          _buildHeader(), // İlan bilgilerini gösteren başlık
-          Expanded(
-            child: _buildMessagesList(),
+            backgroundColor: Colors.blueAccent,
+            elevation: 0,
           ),
-          _buildMessageInput(),
-        ],
-      ),
-    );
-  }
-}
+          body: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: _buildMessagesList(),
+              ),
+              _buildMessageInput(),
+            ],
+          ),
+        );
+      }
+    }
+
+    class ListingPickerBottomSheet extends StatelessWidget {
+      const ListingPickerBottomSheet({Key? key}) : super(key: key);
+
+      @override
+      Widget build(BuildContext context) {
+        final currentUser = FirebaseAuth.instance.currentUser;
+
+        if (currentUser == null) {
+          return Container(
+            height: 200,
+            color: Colors.white,
+            child: const Center(
+              child: Text('Giriş yapmanız gerekiyor.', style: TextStyle(fontSize: 16)),
+            ),
+          );
+        }
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const Text(
+                'Kendi İlanlarınızı Seçin',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('listings')
+                      .where('userId', isEqualTo: currentUser.uid) // Sadece kendi ilanları
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(child: Text('İlanlar yüklenirken hata oluştu.'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text('Henüz kendi ilanınız yok.'));
+                    }
+
+                    final listings = snapshot.data!.docs
+                        .map((doc) => Listing.fromDocument(doc))
+                        .toList();
+
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 0.7,
+                      ),
+                      itemCount: listings.length,
+                      itemBuilder: (context, index) {
+                        final listing = listings[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop(listing);
+                          },
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                    child: CachedNetworkImage(
+                                      imageUrl: listing.imageUrl.first,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Center(
+                                          child: Icon(Icons.image, color: Colors.white70, size: 40),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Center(
+                                          child: Icon(Icons.broken_image, color: Colors.white70, size: 40),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Text(
+                                    listing.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: Text(
+                                    '${listing.price.toStringAsFixed(2)} ₺',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
