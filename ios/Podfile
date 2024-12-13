@@ -1,5 +1,6 @@
 # Uncomment this line to define a global platform for your project
 platform :ios, '15.0'
+pod 'Google-Mobile-Ads-SDK'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
@@ -43,6 +44,8 @@ target 'Runner' do
     inherit! :search_paths
   end
 end
+
+
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|

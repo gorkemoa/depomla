@@ -1,15 +1,21 @@
-import 'package:depomla/notifications_page.dart';
-import 'package:depomla/pages/auth_page/settings_page.dart';
-import 'package:depomla/pages/listing_page/my_listings_page.dart';
+// listing_model.dart içindeki ListingType tanımını kaldırın.
+
+// add_listing_page.dart içindeki ListingType tanımını koruyun:
+// enum ListingType { deposit, storage }
+
+// home_page.dart içinde:
 import 'package:flutter/material.dart';
+import '../models/listing_model.dart';
 import 'listing_page/listings_page.dart';
 import 'comment_page/chats_page.dart';
-import 'listing_page/add_listing_page.dart';
+import 'listing_page/add_listing_page.dart'; // Burada ListingType tanımlı
 import 'profil_page/profile_page.dart';
-import '../models/listing_model.dart';
+import 'package:depomla/pages/listing_page/my_listings_page.dart';
+import 'package:depomla/notifications_page.dart';
+import 'package:depomla/pages/auth_page/settings_page.dart';
 
 class HomePage extends StatefulWidget {
-  final ListingType selectedCategory;
+  final ListingType selectedCategory; // Artık ListingType add_listing_page.dart'tan geliyor
 
   const HomePage({super.key, required this.selectedCategory});
 
@@ -23,12 +29,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
-      ListingsPage(
-          category:
-              widget.selectedCategory), // Dinamik kategoriye göre ana sayfa
+      ListingsPage(category: widget.selectedCategory),
       ChatsPage(),
       const AddListingPage(),
-      const MyListingsPage(), // İlanlarım için örnek
+      const MyListingsPage(),
       ProfilePage(),
     ];
 
@@ -58,8 +62,7 @@ class _HomePageState extends State<HomePage> {
                 label: 'Sohbetler',
               ),
               BottomNavigationBarItem(
-                icon: SizedBox
-                    .shrink(), // Ortadaki öğe boş olacak, yerini custom widget alacak
+                icon: SizedBox.shrink(),
                 label: '',
               ),
               BottomNavigationBarItem(
@@ -73,21 +76,21 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           Positioned(
-            top: -23, // İkonun biraz yukarı çıkması için
-            left: MediaQuery.of(context).size.width / 2 - 25, // Ortalamak için
+            top: -23,
+            left: MediaQuery.of(context).size.width / 2 - 25,
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _selectedIndex = 2; // "İlan Ver" sayfasına git
+                  _selectedIndex = 2;
                 });
               },
               child: Column(
                 children: [
                   CircleAvatar(
                     backgroundColor: const Color.fromARGB(255, 207, 224, 231),
-                    radius: 25, // Yuvarlak ikon boyutu
+                    radius: 25,
                     child: Image.asset(
-                      'assets/ilan_ver.png', // İkonun yolu
+                      'assets/ilan_ver.png',
                       height: 27,
                       width: 27,
                       fit: BoxFit.contain,

@@ -1,19 +1,18 @@
-// lib/pages/listing_page/add_listing_page.dart
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-
-import '../../models/listing_model.dart';
+import 'package:uuid/uuid.dart';
+import '../../models/listing_model.dart'; // ListingType burada tanımlı
 import '../../models/city_model.dart';
 import '../../models/district_model.dart';
 import '../../models/neighborhood_model.dart';
 import '../../services/location_service.dart';
+import '../auth_page/login_page.dart';
 import 'listings_details_page.dart';
 
 class AddListingPage extends StatefulWidget {
@@ -24,23 +23,22 @@ class AddListingPage extends StatefulWidget {
 }
 
 class _AddListingPageState extends State<AddListingPage> {
-  // Form Key
   final _formKey = GlobalKey<FormState>();
 
-  // Controllerlar
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-  final TextEditingController metreKareController = TextEditingController();
-  final TextEditingController startDateController = TextEditingController();
-  final TextEditingController endDateController = TextEditingController();
+  // Kontrolörler
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final priceController = TextEditingController();
+  final metreKareController = TextEditingController();
+  final startDateController = TextEditingController();
+  final endDateController = TextEditingController();
 
-  // Diğer değişkenler
+  // Resimler
   List<File> _imageFiles = [];
-  final ImagePicker _picker = ImagePicker();
+  final _picker = ImagePicker();
   bool _isLoading = false;
 
-  // Özellikler için
+  // Özellikler
   Map<String, bool> _features = {
     'Güvenlik Kamerası': false,
     'Alarm Sistemi': false,
@@ -48,103 +46,156 @@ class _AddListingPageState extends State<AddListingPage> {
     'Yangın Söndürme Sistemi': false,
   };
 
-  // Şehir, İlçe, Mahalle gibi alanlar için modellerden listeler
+  // Lokasyon verileri
   List<City> _citiesList = [];
   List<District> _districtsList = [];
   List<Neighborhood> _neighborhoodsList = [];
-  bool _isCitiesLoading = false;
-  bool _isDistrictsLoading = false;
-  bool _isNeighborhoodsLoading = false;
-
-  // Seçilen değerler
   City? _selectedCity;
   District? _selectedDistrict;
   Neighborhood? _selectedNeighborhood;
+
+  // Depolama türü ve ilan türü
   String? _selectedStorageType;
   ListingType? _selectedListingType;
-
   final List<String> _storageTypes = ['İç Mekan', 'Dış Mekan'];
-  
-  // Tarih formatlama
+
+  // Tarih formatı ve lokasyon servisi
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
-
-  // Stepper için
-  int _currentStep = 0;
-
-  // LocationService instance
   final LocationService _locationService = LocationService();
+
+  // Yeni alanlar
+  String? _itemType;
+  final _lengthController = TextEditingController();
+  final _widthController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _itemWeightController = TextEditingController();
+  String? _itemCondition;
+  final _specialRequirementsController = TextEditingController();
+  bool _requiresTemperatureControl = false;
+  bool _requiresDryEnvironment = false;
+  bool _insuranceRequired = false;
+  List<String> _prohibitedConditions = [];
+  bool _ownerPickup = false;
+  final _deliveryDetailsController = TextEditingController();
+  final _additionalNotesController = TextEditingController();
+  List<String> _preferredFeatures = [];
 
   @override
   void initState() {
     super.initState();
-    _loadCities();
+    _checkUserAuthentication();
   }
 
+  @override
+  void dispose() {
+    // Tüm kontrolörleri temizleyin
+    titleController.dispose();
+    descriptionController.dispose();
+    priceController.dispose();
+    metreKareController.dispose();
+    startDateController.dispose();
+    endDateController.dispose();
+    _lengthController.dispose();
+    _widthController.dispose();
+    _heightController.dispose();
+    _itemWeightController.dispose();
+    _specialRequirementsController.dispose();
+    _deliveryDetailsController.dispose();
+    _additionalNotesController.dispose();
+    super.dispose();
+  }
+
+  // Kullanıcı doğrulamasını kontrol etme
+  Future<void> _checkUserAuthentication() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      });
+    } else {
+      await _loadCities();
+    }
+  }
+
+  // Şehirleri yükleme
   Future<void> _loadCities() async {
-    setState(() {
-      _isCitiesLoading = true;
-    });
     try {
+      setState(() {
+        _isLoading = true;
+      });
       _citiesList = await _locationService.getCities();
-      print('Loaded cities: ${_citiesList.map((city) => city.sehirAdi).toList()}');
+      print('Loaded ${_citiesList.length} cities');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Şehirler yüklenirken hata oluştu: $e')),
-      );
+      _showSnackBar('Şehirler yüklenirken hata oluştu: $e');
+      print('Error loading cities: $e');
     } finally {
       setState(() {
-        _isCitiesLoading = false;
+        _isLoading = false;
       });
     }
   }
 
+  // İlçeleri yükleme
   Future<void> _loadDistricts(String cityId) async {
-    setState(() {
-      _isDistrictsLoading = true;
-    });
     try {
+      setState(() {
+        _isLoading = true;
+      });
       _districtsList = await _locationService.getDistricts(cityId);
-      print('Loaded districts: ${_districtsList.map((district) => district.ilceAdi).toList()}');
+      print('Loaded ${_districtsList.length} districts for city $cityId');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İlçeler yüklenirken hata oluştu: $e')),
-      );
+      _showSnackBar('İlçeler yüklenirken hata oluştu: $e');
+      print('Error loading districts: $e');
     } finally {
       setState(() {
-        _isDistrictsLoading = false;
+        _isLoading = false;
       });
     }
   }
 
+  // Mahalleleri yükleme
   Future<void> _loadNeighborhoods(String cityId, String districtId) async {
-    setState(() {
-      _isNeighborhoodsLoading = true;
-    });
     try {
-      _neighborhoodsList = await _locationService.getNeighborhoods(cityId, districtId);
-      print('Loaded neighborhoods: ${_neighborhoodsList.map((n) => n.mahalleAdi).toList()}');
+      setState(() {
+        _isLoading = true;
+      });
+      _neighborhoodsList =
+          await _locationService.getNeighborhoods(cityId, districtId);
+      print(
+          'Loaded ${_neighborhoodsList.length} neighborhoods for district $districtId in city $cityId');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Mahalleler yüklenirken hata oluştu: $e')),
-      );
+      _showSnackBar('Mahalleler yüklenirken hata oluştu: $e');
+      print('Error loading neighborhoods: $e');
     } finally {
       setState(() {
-        _isNeighborhoodsLoading = false;
+        _isLoading = false;
       });
     }
   }
 
-  // Tarih seçici
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-    DateTime initialDate = DateTime.now();
-    DateTime firstDate = DateTime(2000);
-    DateTime lastDate = DateTime(2101);
-
-    final DateTime? picked = await showDatePicker(
+  // Tarih seçme fonksiyonu
+  Future<void> _selectDate(
+      BuildContext context, TextEditingController controller) async {
+    final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blueAccent, // Başlık ve buton renkleri
+              onPrimary: Colors.white, // Buton metin rengi
+              onSurface: Colors.black, // Tarih seçme arka plan rengi
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -153,47 +204,69 @@ class _AddListingPageState extends State<AddListingPage> {
     }
   }
 
-  // Fotoğraf seçme
+  // Resim seçme fonksiyonu
   Future<void> _pickImages() async {
-    final List<XFile>? pickedFiles = await _picker.pickMultiImage(imageQuality: 50);
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
-      setState(() {
-        _imageFiles.addAll(pickedFiles.map((xfile) => File(xfile.path)).toList());
-      });
-      print('Picked ${pickedFiles.length} images.');
+    try {
+      final pickedFiles = await _picker.pickMultiImage(imageQuality: 70);
+      if (pickedFiles != null) {
+        setState(() {
+          _imageFiles
+              .addAll(pickedFiles.map((xfile) => File(xfile.path)).toList());
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Fotoğraf seçilirken hata oluştu: $e');
+      print('Error picking images: $e');
     }
   }
 
-  // Fotoğraf silme
+  // Resim kaldırma fonksiyonu
   void _removeImage(int index) {
     setState(() {
-      _imageFiles.removeAt(index);
+      if (index >= 0 && index < _imageFiles.length) {
+        _imageFiles.removeAt(index);
+      }
     });
-    print('Removed image at index: $index');
   }
 
-  // İlan ekleme işlemi
+  // SnackBar gösterme fonksiyonu
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // Resimleri Firebase Storage'a yükleme
+  Future<List<String>> _uploadImages() async {
+    List<String> downloadUrls = [];
+    try {
+      for (var image in _imageFiles) {
+        String fileName = Uuid().v4();
+        Reference ref =
+            FirebaseStorage.instance.ref().child('listing_images').child(fileName);
+        UploadTask uploadTask = ref.putFile(image);
+        TaskSnapshot snapshot = await uploadTask;
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        downloadUrls.add(downloadUrl);
+      }
+    } catch (e) {
+      throw Exception('Fotoğraflar yüklenirken hata oluştu: $e');
+    }
+    return downloadUrls;
+  }
+
+  // İlan ekleme fonksiyonu
   Future<void> _addListing() async {
     if (!_formKey.currentState!.validate()) {
+      _showSnackBar('Lütfen gerekli alanları doldurun.');
       return;
     }
 
     if (_imageFiles.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen en az bir fotoğraf seçin.')),
-      );
-      return;
-    }
-
-    double? price = double.tryParse(priceController.text.trim());
-    double? metreKare = _selectedListingType == ListingType.storage
-        ? double.tryParse(metreKareController.text.trim())
-        : null;
-
-    if (price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir fiyat giriniz.')),
-      );
+      _showSnackBar('Lütfen en az bir fotoğraf seçin.');
       return;
     }
 
@@ -202,96 +275,82 @@ class _AddListingPageState extends State<AddListingPage> {
     });
 
     try {
-      // Kullanıcı bilgilerini al
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Kullanıcı giriş yapmamış.');
 
-      // Fotoğrafları Firebase Storage'a yükle ve URL'leri al
-      List<String> imageUrls = [];
-      for (var imageFile in _imageFiles) {
-        String fileId = const Uuid().v4();
-        String imageUrl = await FirebaseStorage.instance
-            .ref()
-            .child('listing_images')
-            .child('$fileId.jpg')
-            .putFile(imageFile)
-            .then((snapshot) => snapshot.ref.getDownloadURL());
-        imageUrls.add(imageUrl);
-      }
-      print('Uploaded images and obtained URLs.');
+      // Fotoğrafları yükleyin
+      List<String> imageUrls = await _uploadImages();
 
-      // Seçilen özellikleri filtrele
-      Map<String, bool> selectedFeatures = {};
-      _features.forEach((key, value) {
-        if (value) selectedFeatures[key] = value;
-      });
-
-      // İlanı oluştur
-      Listing listing = Listing(
-        id: '', // Firestore tarafından otomatik atanacak
+      // Yeni bir Listing nesnesi oluşturun
+      Listing newListing = Listing(
+        id: '', // Firestore'dan alınacak
         title: titleController.text.trim(),
         description: descriptionController.text.trim(),
-        price: price,
+        price: double.parse(priceController.text.trim()),
         imageUrl: imageUrls,
         userId: user.uid,
         createdAt: Timestamp.now(),
         listingType: _selectedListingType!,
-        size: metreKare,
-        city: _selectedCity?.sehirAdi,
-        district: _selectedDistrict?.ilceAdi,
-        neighborhood: _selectedNeighborhood?.mahalleAdi,
+        size: _selectedListingType == ListingType.storage
+            ? double.parse(metreKareController.text.trim())
+            : null,
+        city: _selectedCity?.sehirAdi, // İsimle kaydediyoruz
+        district: _selectedDistrict?.ilceAdi, // İsimle kaydediyoruz
+        neighborhood: _selectedNeighborhood?.mahalleAdi, // İsimle kaydediyoruz
         storageType: _selectedStorageType,
-        features: selectedFeatures,
-        startDate: startDateController.text.trim().isNotEmpty
-            ? startDateController.text.trim()
+        features: _selectedListingType == ListingType.storage ? _features : {},
+        startDate: startDateController.text.trim(),
+        endDate: endDateController.text.trim(),
+        // Yeni alanlar
+        itemType: _itemType,
+        itemDimensions: (_lengthController.text.isNotEmpty &&
+                _widthController.text.isNotEmpty &&
+                _heightController.text.isNotEmpty)
+            ? {
+                'length': double.parse(_lengthController.text.trim()),
+                'width': double.parse(_widthController.text.trim()),
+                'height': double.parse(_heightController.text.trim()),
+              }
             : null,
-        endDate: endDateController.text.trim().isNotEmpty
-            ? endDateController.text.trim()
+        itemWeight: _itemWeightController.text.isNotEmpty
+            ? double.parse(_itemWeightController.text.trim())
             : null,
+        requiresTemperatureControl: _requiresTemperatureControl,
+        requiresDryEnvironment: _requiresDryEnvironment,
+        insuranceRequired: _insuranceRequired,
+        prohibitedConditions:
+            _prohibitedConditions.isNotEmpty ? _prohibitedConditions : null,
+        ownerPickup: _ownerPickup,
+        deliveryDetails: _deliveryDetailsController.text.trim().isNotEmpty
+            ? _deliveryDetailsController.text.trim()
+            : null,
+        additionalNotes: _additionalNotesController.text.trim().isNotEmpty
+            ? _additionalNotesController.text.trim()
+            : null,
+        preferredFeatures:
+            _preferredFeatures.isNotEmpty ? _preferredFeatures : null,
       );
 
-      // Firestore'a ilan ekle
+      // Firestore'a ekleme
       DocumentReference docRef = await FirebaseFirestore.instance
           .collection('listings')
-          .add(listing.toMap());
+          .add(newListing.toMap());
 
-      // Firestore tarafından atanan ID'yi ilan nesnesine ekle
-      listing = listing.copyWith(id: docRef.id);
+      // ID'yi güncelle
+      await docRef.update({'id': docRef.id});
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İlan başarıyla eklendi.')),
-      );
+      _showSnackBar('İlan başarıyla eklendi.');
+      _resetForm();
 
-      // Formu sıfırla
-      _formKey.currentState!.reset();
-      titleController.clear();
-      descriptionController.clear();
-      priceController.clear();
-      metreKareController.clear();
-      startDateController.clear();
-      endDateController.clear();
-      setState(() {
-        _imageFiles = [];
-        _selectedCity = null;
-        _selectedDistrict = null;
-        _selectedNeighborhood = null;
-        _selectedStorageType = null;
-        _features.updateAll((key, value) => false);
-        _currentStep = 0;
-        _selectedListingType = null;
-      });
-
-      // İlan detayına yönlendir
+      // İlan detay sayfasına yönlendirme
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ListingDetailPage(listing: listing),
+          builder: (context) => ListingDetailPage(listing: newListing.copyWith(id: docRef.id)),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $e')),
-      );
+      _showSnackBar('Hata: $e');
       print('Error adding listing: $e');
     } finally {
       setState(() {
@@ -300,540 +359,734 @@ class _AddListingPageState extends State<AddListingPage> {
     }
   }
 
-  @override
-  void dispose() {
-    titleController.dispose();
-    descriptionController.dispose();
-    priceController.dispose();
-    metreKareController.dispose();
-    startDateController.dispose();
-    endDateController.dispose();
-    super.dispose();
+  // Formu sıfırlama fonksiyonu
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    titleController.clear();
+    descriptionController.clear();
+    priceController.clear();
+    metreKareController.clear();
+    startDateController.clear();
+    endDateController.clear();
+    _imageFiles.clear();
+    _selectedCity = null;
+    _selectedDistrict = null;
+    _selectedNeighborhood = null;
+    _selectedStorageType = null;
+    _features.updateAll((key, value) => false);
+    _selectedListingType = null;
+    _itemType = null;
+    _lengthController.clear();
+    _widthController.clear();
+    _heightController.clear();
+    _itemWeightController.clear();
+    _requiresTemperatureControl = false;
+    _requiresDryEnvironment = false;
+    _insuranceRequired = false;
+    _prohibitedConditions.clear();
+    _ownerPickup = false;
+    _deliveryDetailsController.clear();
+    _additionalNotesController.clear();
+    _preferredFeatures.clear();
   }
 
-  // Stepper adımlarını oluşturma
-  List<Step> _buildSteps() {
-    return [
-      Step(
-        title: const Text('Genel Bilgiler'),
-        isActive: _currentStep >= 0,
-        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            // İlan Türü Seçimi
-            DropdownButtonFormField<ListingType>(
-              value: _selectedListingType,
-              decoration: InputDecoration(
-                labelText: 'İlan Türü *',
-                prefixIcon: const Icon(Icons.category),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: ListingType.values.map((ListingType type) {
-                return DropdownMenuItem<ListingType>(
-                  value: type,
-                  child: Text(type == ListingType.deposit ? 'Eşyanı Depolamak' : 'Depolama'),
-                );
-              }).toList(),
-              onChanged: (ListingType? newValue) {
-                setState(() {
-                  _selectedListingType = newValue;
-                  // Eğer depozito seçildiyse, size alanını sıfırla
-                  if (_selectedListingType != ListingType.storage) {
-                    metreKareController.clear();
-                  }
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'İlan türü seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // İlan Başlığı
-            TextFormField(
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: 'İlan Başlığı *',
-                prefixIcon: const Icon(Icons.title),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'İlan başlığı boş olamaz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // İlan Açıklaması
-            TextFormField(
-              controller: descriptionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: 'Açıklama *',
-                prefixIcon: const Icon(Icons.description),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Açıklama boş olamaz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Fiyat Girişi
-            TextFormField(
-              controller: priceController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Fiyat (₺) *',
-                prefixIcon: const Icon(Icons.attach_money),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Fiyat boş olamaz.';
-                }
-                if (double.tryParse(value.trim()) == null) {
-                  return 'Geçerli bir fiyat girin.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Metre Kare Girişi (Koşullu)
-            if (_selectedListingType == ListingType.storage) ...[
-              TextFormField(
-                controller: metreKareController,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Metre Kare *',
-                  prefixIcon: const Icon(Icons.straighten),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (value) {
-                  if (_selectedListingType == ListingType.storage) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Metre kare boş olamaz.';
-                    }
-                    if (double.tryParse(value.trim()) == null) {
-                      return 'Geçerli bir metre kare değeri girin.';
-                    }
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ],
+  // Boyut alanları için yardımcı widget
+  Widget _buildDimensionField(TextEditingController controller, String label) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.straighten),
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
         ),
+        filled: true,
+        fillColor: Colors.grey[100],
       ),
-      Step(
-        title: const Text('Konum Bilgileri'),
-        isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            // Şehir Seçimi
-            DropdownButtonFormField<City>(
-              value: _selectedCity,
-              decoration: InputDecoration(
-                labelText: 'Şehir *',
-                prefixIcon: const Icon(Icons.location_city),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: _isCitiesLoading
-                  ? [
-                      DropdownMenuItem(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(),
-                        ),
-                        value: null,
-                      )
-                    ]
-                  : _citiesList.map((City city) {
-                      return DropdownMenuItem<City>(
-                        value: city,
-                        child: Text(city.sehirAdi),
-                      );
-                    }).toList(),
-              onChanged: (City? newCity) async {
-                setState(() {
-                  _selectedCity = newCity;
-                  _selectedDistrict = null;
-                  _selectedNeighborhood = null;
-                  _districtsList = [];
-                  _neighborhoodsList = [];
-                });
-                if (newCity != null) {
-                  await _loadDistricts(newCity.id);
-                }
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Şehir seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // İlçe Seçimi
-            DropdownButtonFormField<District>(
-              value: _selectedDistrict,
-              decoration: InputDecoration(
-                labelText: 'İlçe *',
-                prefixIcon: const Icon(Icons.map),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: _isDistrictsLoading
-                  ? [
-                      DropdownMenuItem(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(),
-                        ),
-                        value: null,
-                      )
-                    ]
-                  : _districtsList.map((District district) {
-                      return DropdownMenuItem<District>(
-                        value: district,
-                        child: Text(district.ilceAdi),
-                      );
-                    }).toList(),
-              onChanged: (District? newDistrict) async {
-                setState(() {
-                  _selectedDistrict = newDistrict;
-                  _selectedNeighborhood = null;
-                  _neighborhoodsList = [];
-                });
-                if (newDistrict != null && _selectedCity != null) {
-                  await _loadNeighborhoods(_selectedCity!.id, newDistrict.id);
-                }
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'İlçe seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Mahalle Seçimi
-            DropdownButtonFormField<Neighborhood>(
-              value: _selectedNeighborhood,
-              decoration: InputDecoration(
-                labelText: 'Mahalle *',
-                prefixIcon: const Icon(Icons.house),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: _isNeighborhoodsLoading
-                  ? [
-                      DropdownMenuItem(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(),
-                        ),
-                        value: null,
-                      )
-                    ]
-                  : _neighborhoodsList.map((Neighborhood neighborhood) {
-                      return DropdownMenuItem<Neighborhood>(
-                        value: neighborhood,
-                        child: Text(neighborhood.mahalleAdi),
-                      );
-                    }).toList(),
-              onChanged: (Neighborhood? newNeighborhood) {
-                setState(() {
-                  _selectedNeighborhood = newNeighborhood;
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Mahalle seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-      Step(
-        title: const Text('Depolama Detayları'),
-        isActive: _currentStep >= 2,
-        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            // Depolama Türü Seçimi
-            DropdownButtonFormField<String>(
-              value: _selectedStorageType,
-              decoration: InputDecoration(
-                labelText: 'Depolama Türü *',
-                prefixIcon: const Icon(Icons.storage),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              items: _storageTypes.map((String type) {
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedStorageType = newValue;
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Depolama türü seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Başlangıç Tarihi
-            TextFormField(
-              controller: startDateController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Başlangıç Tarihi *',
-                prefixIcon: const Icon(Icons.calendar_today),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.date_range),
-                  onPressed: () => _selectDate(context, startDateController),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Başlangıç tarihi seçmelisiniz.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Bitiş Tarihi
-            TextFormField(
-              controller: endDateController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Bitiş Tarihi',
-                prefixIcon: const Icon(Icons.calendar_today),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.date_range),
-                  onPressed: () => _selectDate(context, endDateController),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Özellikler
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Özellikler',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Column(
-              children: _features.keys.map((String key) {
-                return CheckboxListTile(
-                  title: Text(key),
-                  value: _features[key],
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _features[key] = value ?? false;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-      Step(
-        title: const Text('Fotoğraflar'),
-        isActive: _currentStep >= 3,
-        state: _currentStep > 3 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            // Fotoğraf Seçme
-            GestureDetector(
-              onTap: _pickImages,
-              child: Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey[200],
-                ),
-                child: _imageFiles.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text('Fotoğraf Yükle', style: TextStyle(color: Colors.grey)),
-                        ],
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(8.0),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        itemCount: _imageFiles.length,
-                        itemBuilder: (context, index) {
-                          return Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  _imageFiles[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                ),
-                              ),
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: GestureDetector(
-                                  onTap: () => _removeImage(index),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_imageFiles.isNotEmpty)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${_imageFiles.length} Fotoğraf Seçildi',
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ),
-          ],
-        ),
-      ),
-      Step(
-        title: const Text('Son Adım'),
-        isActive: _currentStep >= 4,
-        state: _currentStep >= 4 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            const Text(
-              'İlanınızı oluşturmak için son butona tıklayın.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _addListing,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                textStyle: const TextStyle(fontSize: 18),
-                backgroundColor: Colors.blueAccent,
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    )
-                  : const Text('İlan Ekle'),
-            ),
-          ],
-        ),
-      ),
-    ];
+      validator: (value) {
+        // İsteğe bağlı validation
+        return null;
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+      color: Colors.blueAccent.shade700,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('İlan Ekle'),
         backgroundColor: Colors.blueAccent,
+        elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: Stepper(
-                type: StepperType.vertical,
-                currentStep: _currentStep,
-                onStepContinue: () {
-                  if (_currentStep < _buildSteps().length - 1) {
-                    // İlerleme
-                    setState(() {
-                      _currentStep += 1;
-                    });
-                  }
-                },
-                onStepCancel: () {
-                  if (_currentStep > 0) {
-                    // Geri alma
-                    setState(() {
-                      _currentStep -= 1;
-                    });
-                  }
-                },
-                controlsBuilder: (BuildContext context, ControlsDetails details) {
-                  return Row(
-                    children: <Widget>[
-                      ElevatedButton(
-                        onPressed: details.onStepContinue,
-                        child: Text(_currentStep == _buildSteps().length - 1 ? 'Son Adım' : 'İleri'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (_currentStep > 0)
-                        ElevatedButton(
-                          onPressed: details.onStepCancel,
-                          child: const Text('Geri'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Genel Bilgiler
+                          Text('Genel Bilgiler', style: titleStyle),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: titleController,
+                            decoration: InputDecoration(
+                              labelText: 'İlan Başlığı',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.title),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            validator: (val) =>
+                                val == null || val.isEmpty ? 'Boş bırakılamaz' : null,
                           ),
-                        ),
-                    ],
-                  );
-                },
-                steps: _buildSteps(),
-              ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: descriptionController,
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              labelText: 'Açıklama',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.description),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            validator: (val) =>
+                                val == null || val.isEmpty ? 'Boş bırakılamaz' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<ListingType>(
+                            value: _selectedListingType,
+                            decoration: InputDecoration(
+                              labelText: 'İlan Türü',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.category),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            items: ListingType.values.map((type) {
+                              return DropdownMenuItem(
+                                value: type,
+                                child: Text(type == ListingType.deposit
+                                    ? 'Eşyanı Depolamak'
+                                    : 'Depolama'),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedListingType = val;
+                                // Özellikleri sıfırla eğer ilan türü 'deposit' ise
+                                if (_selectedListingType == ListingType.deposit) {
+                                  _features.updateAll((key, value) => false);
+                                }
+                              });
+                            },
+                            validator: (val) => val == null ? 'Seçim yapın' : null,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Fiyat ve Boyut
+                          Text('Fiyat ve Boyut', style: titleStyle),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: priceController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Fiyat (₺)',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.attach_money),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            validator: (val) {
+                              if (val == null || val.isEmpty) return 'Boş bırakılamaz.';
+                              if (double.tryParse(val) == null)
+                                return 'Geçerli bir sayı girin.';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          if (_selectedListingType == ListingType.storage)
+                            TextFormField(
+                              controller: metreKareController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Metre Kare',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.straighten),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              validator: (val) {
+                                if (_selectedListingType == ListingType.storage) {
+                                  if (val == null || val.isEmpty)
+                                    return 'Boş bırakılamaz.';
+                                  if (double.tryParse(val) == null)
+                                    return 'Geçerli bir sayı girin.';
+                                }
+                                return null;
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.storage)
+                            const SizedBox(height: 16),
+
+                          // Konum Bilgileri
+                          Text('Konum Bilgileri', style: titleStyle),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<City>(
+                            value: _selectedCity,
+                            decoration: InputDecoration(
+                              labelText: 'Şehir',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.location_city),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            items: _citiesList.map((city) {
+                              return DropdownMenuItem(
+                                value: city,
+                                child: Text(city.sehirAdi),
+                              );
+                            }).toList(),
+                            onChanged: (val) async {
+                              setState(() {
+                                _selectedCity = val;
+                                _selectedDistrict = null;
+                                _selectedNeighborhood = null;
+                                _districtsList = [];
+                                _neighborhoodsList = [];
+                              });
+                              if (val != null) {
+                                await _loadDistricts(val.id);
+                              }
+                            },
+                            validator: (val) => val == null ? 'Seçim yapın' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<District>(
+                            value: _selectedDistrict,
+                            decoration: InputDecoration(
+                              labelText: 'İlçe',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.location_city),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            items: _districtsList.map((district) {
+                              return DropdownMenuItem(
+                                value: district,
+                                child: Text(district.ilceAdi),
+                              );
+                            }).toList(),
+                            onChanged: (val) async {
+                              setState(() {
+                                _selectedDistrict = val;
+                                _selectedNeighborhood = null;
+                                _neighborhoodsList = [];
+                              });
+                              if (val != null && _selectedCity != null) {
+                                await _loadNeighborhoods(
+                                    _selectedCity!.id, val.id);
+                              }
+                            },
+                            validator: (val) => val == null ? 'Seçim yapın' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<Neighborhood>(
+                            value: _selectedNeighborhood,
+                            decoration: InputDecoration(
+                              labelText: 'Mahalle',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.location_city),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            items: _neighborhoodsList.map((neighborhood) {
+                              return DropdownMenuItem(
+                                value: neighborhood,
+                                child: Text(neighborhood.mahalleAdi),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedNeighborhood = val;
+                              });
+                            },
+                            validator: (val) => val == null ? 'Seçim yapın' : null,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Depolama Detayları
+                          if (_selectedListingType == ListingType.storage)
+                            Text('Depolama Detayları', style: titleStyle),
+                          if (_selectedListingType == ListingType.storage)
+                            const SizedBox(height: 12),
+                          if (_selectedListingType == ListingType.storage)
+                            DropdownButtonFormField<String>(
+                              value: _selectedStorageType,
+                              decoration: InputDecoration(
+                                labelText: 'Depolama Türü',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.storage),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              items: _storageTypes.map((type) {
+                                return DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedStorageType = val;
+                                });
+                              },
+                              validator: (val) => val == null ? 'Seçim yapın' : null,
+                            ),
+                          if (_selectedListingType == ListingType.storage)
+                            const SizedBox(height: 24),
+
+                          // Tarihler
+                          Text('Tarihler', style: titleStyle),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: startDateController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Başlangıç Tarihi',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.calendar_today),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.date_range),
+                                onPressed: () =>
+                                    _selectDate(context, startDateController),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            validator: (val) =>
+                                val == null || val.isEmpty ? 'Seçim yapın' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: endDateController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Bitiş Tarihi',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: const Icon(Icons.calendar_today),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.date_range),
+                                onPressed: () =>
+                                    _selectDate(context, endDateController),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                            validator: (val) {
+                              if (val != null && val.isNotEmpty) {
+                                // Bitiş tarihinin başlangıç tarihinden sonra olduğundan emin olun
+                                try {
+                                  DateTime startDate = _dateFormat
+                                      .parse(startDateController.text.trim());
+                                  DateTime endDate =
+                                      _dateFormat.parse(val.trim());
+                                  if (endDate.isBefore(startDate)) {
+                                    return 'Bitiş tarihi başlangıç tarihinden önce olamaz.';
+                                  }
+                                } catch (e) {
+                                  return 'Geçerli bir tarih seçin.';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Özellikler - Sadece 'Depolama' ilan türü için göster
+                          if (_selectedListingType == ListingType.storage)
+                            Text('Özellikler', style: titleStyle),
+                          if (_selectedListingType == ListingType.storage)
+                            const SizedBox(height: 12),
+                          if (_selectedListingType == ListingType.storage)
+                            Column(
+                              children: _features.keys.map((key) {
+                                return CheckboxListTile(
+                                  title: Text(key),
+                                  value: _features[key],
+                                  activeColor: Colors.blueAccent,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _features[key] = val ?? false;
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          if (_selectedListingType == ListingType.storage)
+                            const SizedBox(height: 24),
+
+                          // Ekstra Bilgiler - Sadece 'Depolama' ilan türü için göster
+                          if (_selectedListingType == ListingType.deposit)
+                            Text('Ekstra Bilgiler', style: titleStyle),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 12),
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Eşya Türü',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.category),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              onChanged: (val) {
+                                setState(() {
+                                  _itemType =
+                                      val.trim().isEmpty ? null : val.trim();
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+                          if (_selectedListingType == ListingType.deposit)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDimensionField(
+                                      _lengthController, 'Uzunluk (m)'),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildDimensionField(
+                                      _widthController, 'Genişlik (m)'),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildDimensionField(
+                                      _heightController, 'Yükseklik (m)'),
+                                ),
+                              ],
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              controller: _itemWeightController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'Eşya Ağırlığı (kg)',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.fitness_center),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              validator: (val) {
+                                if (val != null &&
+                                    val.isNotEmpty &&
+                                    double.tryParse(val) == null) {
+                                  return 'Geçerli bir sayı girin.';
+                                }
+                                return null;
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+                          if (_selectedListingType == ListingType.deposit)
+                            SwitchListTile(
+                              title: const Text('Sıcaklık Kontrolü Gerekiyor mu?'),
+                              activeColor: Colors.blueAccent,
+                              value: _requiresTemperatureControl,
+                              onChanged: (val) {
+                                setState(() {
+                                  _requiresTemperatureControl = val;
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            SwitchListTile(
+                              title: const Text('Kuru Ortam Gerekiyor mu?'),
+                              activeColor: Colors.blueAccent,
+                              value: _requiresDryEnvironment,
+                              onChanged: (val) {
+                                setState(() {
+                                  _requiresDryEnvironment = val;
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            SwitchListTile(
+                              title: const Text('Sigorta Gerekiyor mu?'),
+                              activeColor: Colors.blueAccent,
+                              value: _insuranceRequired,
+                              onChanged: (val) {
+                                setState(() {
+                                  _insuranceRequired = val;
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+
+                          // Yasaklı Şartlar
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Yasaklı Şartlar',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.block),
+                                helperText:
+                                    'Virgülle ayrılmış olarak yazın (örn: Açık ateş, Zehirli maddeler)',
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              onChanged: (val) {
+                                setState(() {
+                                  _prohibitedConditions = val
+                                      .split(',')
+                                      .map((e) => e.trim())
+                                      .where((element) => element.isNotEmpty)
+                                      .toList();
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+
+                          // Sahip Pickup
+                          if (_selectedListingType == ListingType.deposit)
+                            SwitchListTile(
+                              title: const Text('Eşyayı Sahibi Alacak mı?'),
+                              activeColor: Colors.blueAccent,
+                              value: _ownerPickup,
+                              onChanged: (val) {
+                                setState(() {
+                                  _ownerPickup = val;
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+
+                          // Teslimat Detayları
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              controller: _deliveryDetailsController,
+                              decoration: InputDecoration(
+                                labelText: 'Teslimat Detayları',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.delivery_dining),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+
+                          // Ek Notlar
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              controller: _additionalNotesController,
+                              maxLines: 3,
+                              decoration: InputDecoration(
+                                labelText: 'Ek Notlar',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.note),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 16),
+
+                          // Tercih Edilen Özellikler
+                          if (_selectedListingType == ListingType.deposit)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Tercih Edilen Özellikler',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.favorite),
+                                helperText:
+                                    'Virgülle ayrılmış olarak yazın (örn: Güvenli, Kapalı Alan)',
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                              ),
+                              onChanged: (val) {
+                                setState(() {
+                                  _preferredFeatures = val
+                                      .split(',')
+                                      .map((e) => e.trim())
+                                      .where((element) => element.isNotEmpty)
+                                      .toList();
+                                });
+                              },
+                            ),
+                          if (_selectedListingType == ListingType.deposit)
+                            const SizedBox(height: 24),
+
+                          // Fotoğraflar
+                          Text('Fotoğraflar', style: titleStyle),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: _pickImages,
+                            child: Container(
+                              height: 200,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.grey[200],
+                                border: Border.all(color: Colors.blueAccent),
+                              ),
+                              child: _imageFiles.isEmpty
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        Icon(Icons.camera_alt,
+                                            size: 50, color: Colors.grey),
+                                        SizedBox(height: 8),
+                                        Text('Fotoğraf Yükle',
+                                            style:
+                                                TextStyle(color: Colors.grey)),
+                                      ],
+                                    )
+                                  : GridView.builder(
+                                      padding: const EdgeInsets.all(8.0),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        crossAxisSpacing: 8,
+                                        mainAxisSpacing: 8,
+                                      ),
+                                      itemCount: _imageFiles.length,
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) {
+                                        return Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              child: Image.file(
+                                                _imageFiles[index],
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: 4,
+                                              top: 4,
+                                              child: GestureDetector(
+                                                onTap: () => _removeImage(index),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black54,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Gönder Butonu
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _addListing,
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: Colors.blueAccent,
+                                elevation: 5,
+                                shadowColor:
+                                    Colors.blueAccent.withOpacity(0.5),
+                              ),
+                              child: const Text(
+                                'Gönder',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+          // Yükleme işlemi sırasında ekranın kararmasını önlemek için
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(child: CircularProgressIndicator()),
             ),
+        ],
+      ),
     );
   }
 }

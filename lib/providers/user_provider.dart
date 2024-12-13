@@ -14,26 +14,25 @@ class UserProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> loadUserData() async {
-    _isLoading = true;
-    notifyListeners();
+ Future<void> loadUserData() async {
+  if (_isLoading) return; // Prevent multiple concurrent loads
+  _isLoading = true;
 
-    final User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          _userModel = UserModel.fromDocument(doc);
-        }
-      } catch (e) {
-        // Hata yönetimi burada yapılabilir
-        print('Kullanıcı verisi alınırken hata: $e');
+  final User? user = _auth.currentUser;
+  if (user != null) {
+    try {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        _userModel = UserModel.fromDocument(doc);
       }
+    } catch (e) {
+      print('Error fetching user data: $e');
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
+
+  _isLoading = false;
+  notifyListeners();
+}
 
   void updateUserModel(UserModel updatedUser) {
     _userModel = updatedUser;

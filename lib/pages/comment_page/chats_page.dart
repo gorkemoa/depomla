@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../auth_page/login_page.dart';
 import 'chat_page.dart';
 import '../../models/listing_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,7 +22,22 @@ class _ChatsPageState extends State<ChatsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+ 
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+  final currentUser = _auth.currentUser;
+  if (currentUser == null) {
+    // Login sayfasını modal olarak aç
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true, // Modal görünüm
+        builder: (context) => const LoginPage(),
+      ),
+    );
   }
+});
+  }
+  
 
   @override
   void dispose() {

@@ -1,5 +1,3 @@
-// lib/models/listing_model.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Enum representing the type of listing
@@ -27,6 +25,19 @@ class Listing {
   final String? startDate; // Storage start date
   final String? endDate; // Storage end date
 
+  // New fields for detailed item information
+  final String? itemType; // Type of item (e.g., Motorcycle, Furniture)
+  final Map<String, double>? itemDimensions; // Dimensions: length, width, height in meters
+  final double? itemWeight; // Weight in kg
+  final bool? requiresTemperatureControl; // Temperature-sensitive item
+  final bool? requiresDryEnvironment; // Requires dry environment (e.g., for electronics)
+  final bool? insuranceRequired; // Does the item require insurance?
+  final List<String>? prohibitedConditions; // Prohibited conditions for the item
+  final bool? ownerPickup; // Will the owner pick up the item from the user?
+  final String? deliveryDetails; // Responsibility for item delivery
+  final String? additionalNotes; // Additional notes or requirements
+  final List<String>? preferredFeatures; // Features the user is looking for (e.g., secure, covered space)
+
   Listing({
     required this.id,
     required this.title,
@@ -44,6 +55,18 @@ class Listing {
     this.features = const {},
     this.startDate,
     this.endDate,
+    // New fields
+    this.itemType,
+    this.itemDimensions,
+    this.itemWeight,
+    this.requiresTemperatureControl,
+    this.requiresDryEnvironment,
+    this.insuranceRequired,
+    this.prohibitedConditions,
+    this.ownerPickup,
+    this.deliveryDetails,
+    this.additionalNotes,
+    this.preferredFeatures,
   });
 
   /// Factory constructor to create a Listing from a Firestore document
@@ -56,7 +79,7 @@ class Listing {
     } else if (data['imageUrl'] is String) {
       imageUrls = [data['imageUrl'] as String];
     } else {
-      imageUrls = []; // Default to empty list if imageUrl is neither List nor String
+      imageUrls = [];
     }
 
     return Listing(
@@ -80,6 +103,24 @@ class Listing {
           : {},
       startDate: data['startDate']?.toString(),
       endDate: data['endDate']?.toString(),
+      itemType: data['itemType']?.toString(),
+      itemDimensions: data['itemDimensions'] != null
+          ? Map<String, double>.from(
+              data['itemDimensions'] as Map<dynamic, dynamic>)
+          : null,
+      itemWeight: (data['itemWeight'] as num?)?.toDouble(),
+      requiresTemperatureControl: data['requiresTemperatureControl'] as bool?,
+      requiresDryEnvironment: data['requiresDryEnvironment'] as bool?,
+      insuranceRequired: data['insuranceRequired'] as bool?,
+      prohibitedConditions: data['prohibitedConditions'] != null
+          ? List<String>.from(data['prohibitedConditions'] as List<dynamic>)
+          : null,
+      ownerPickup: data['ownerPickup'] as bool?,
+      deliveryDetails: data['deliveryDetails']?.toString(),
+      additionalNotes: data['additionalNotes']?.toString(),
+      preferredFeatures: data['preferredFeatures'] != null
+          ? List<String>.from(data['preferredFeatures'] as List<dynamic>)
+          : null,
     );
   }
 
@@ -101,6 +142,17 @@ class Listing {
       'features': features,
       'startDate': startDate,
       'endDate': endDate,
+      'itemType': itemType,
+      'itemDimensions': itemDimensions,
+      'itemWeight': itemWeight,
+      'requiresTemperatureControl': requiresTemperatureControl,
+      'requiresDryEnvironment': requiresDryEnvironment,
+      'insuranceRequired': insuranceRequired,
+      'prohibitedConditions': prohibitedConditions,
+      'ownerPickup': ownerPickup,
+      'deliveryDetails': deliveryDetails,
+      'additionalNotes': additionalNotes,
+      'preferredFeatures': preferredFeatures,
     };
   }
 
@@ -122,6 +174,18 @@ class Listing {
     Map<String, bool>? features,
     String? startDate,
     String? endDate,
+    // New fields
+    String? itemType,
+    Map<String, double>? itemDimensions,
+    double? itemWeight,
+    bool? requiresTemperatureControl,
+    bool? requiresDryEnvironment,
+    bool? insuranceRequired,
+    List<String>? prohibitedConditions,
+    bool? ownerPickup,
+    String? deliveryDetails,
+    String? additionalNotes,
+    List<String>? preferredFeatures,
   }) {
     return Listing(
       id: id ?? this.id,
@@ -140,6 +204,20 @@ class Listing {
       features: features ?? this.features,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
+      itemType: itemType ?? this.itemType,
+      itemDimensions: itemDimensions ?? this.itemDimensions,
+      itemWeight: itemWeight ?? this.itemWeight,
+      requiresTemperatureControl:
+          requiresTemperatureControl ?? this.requiresTemperatureControl,
+      requiresDryEnvironment:
+          requiresDryEnvironment ?? this.requiresDryEnvironment,
+      insuranceRequired: insuranceRequired ?? this.insuranceRequired,
+      prohibitedConditions:
+          prohibitedConditions ?? this.prohibitedConditions,
+      ownerPickup: ownerPickup ?? this.ownerPickup,
+      deliveryDetails: deliveryDetails ?? this.deliveryDetails,
+      additionalNotes: additionalNotes ?? this.additionalNotes,
+      preferredFeatures: preferredFeatures ?? this.preferredFeatures,
     );
   }
 }

@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "30104908258",
+    "firebase_url": "https://depomla-app-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "depomla-app",
     "storage_bucket": "depomla-app.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.gorkem.depomla"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "30104908258-u8b8f6gbj9dqjoq7ijq3vp3di218pnib.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gorkem.depomla",
+            "certificate_hash": "770a7b9cbe4a66641762c5b985c216699ff7c13d"
+          }
+        },
+        {
+          "client_id": "30104908258-14alh18pg59f1jn9b11jrng91amcghtl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAPkrVPC6mh_ZLh0IsNCCGnIj3jrGo8qXI"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "30104908258-14alh18pg59f1jn9b11jrng91amcghtl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "30104908258-5lfq2uu2r2ngcu48sedsi05h823upv8m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.depomla"
+              }
+            }
+          ]
         }
       }
     }

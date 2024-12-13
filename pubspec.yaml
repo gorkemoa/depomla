@@ -21,7 +21,7 @@ dependencies:
   firebase_storage:
   firebase_auth:
   firebase_messaging:
-
+  google_mobile_ads:
   # Diğer paketler
   image_picker: ^1.1.2
   uuid: ^4.5.1
@@ -33,7 +33,7 @@ dependencies:
   google_fonts: ^6.2.1
   carousel_slider: 
   cached_network_image: ^3.2.3
-  
+  flutter_native_splash:
 
   # Lints for better code practices
   flutter_lints: ^5.0.0
@@ -43,7 +43,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-
+flutter_native_splash:
+  color: "#02aee7" # Uygulamanızın ana rengi
+  image: assets/depomlaloading.gif
+  android: true
+  ios: true
+  web: false
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
 
 flutter_icons:
   android: true
@@ -63,7 +70,7 @@ flutter:
     - assets/loading.gif
     - assets/ilan_ver.png
     - assets/depomlablack.png
-
+    - assets/depomlaloading.gif
 fonts:
     - family: Roboto
       fonts:
