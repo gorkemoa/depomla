@@ -329,15 +329,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildProfileInfo(userModel, lastSignInDate),
                     const SizedBox(height: 24),
 
-                    const AdContainer(),
                     const SizedBox(height: 24),
 
                     _buildNavigationButtons(),
                     const SizedBox(height: 24),
-
                     const AdContainer(),
 
-                    const SizedBox(height: 24),
+
 
                     // Reklamları sayfanın uygun bir yerine yerleştirdik
                   ],

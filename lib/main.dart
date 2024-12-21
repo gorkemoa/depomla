@@ -1,8 +1,10 @@
 // lib/main.dart
-import 'dart:io' show Platform;
+
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:depomla/models/listing_model.dart';
+import 'package:depomla/models/user_model.dart';
 import 'package:depomla/notifications_page.dart';
 import 'package:depomla/pages/auth_page/login_page.dart';
 import 'package:depomla/pages/auth_page/post_login_page.dart';
@@ -15,11 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+import 'services/notification_service.dart'; // Bildirim servisini içe aktar
 
-import 'ads/banner_ad_example.dart';
-
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // Route isimlerini sabitler olarak tanımlayın
 class Routes {
@@ -34,8 +35,7 @@ class Routes {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await GlobalAdsService().initialize(); // Ads SDK'yı başlat
-
+  
   // Firebase başlatılması
   try {
     await Firebase.initializeApp();
@@ -50,45 +50,8 @@ Future<void> main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  // Google Mobile Ads SDK'yi başlat
-
-  // Flutter Local Notifications başlatılması
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  final DarwinInitializationSettings initializationSettingsIOS =
-      DarwinInitializationSettings(
-    requestSoundPermission: true,
-    requestBadgePermission: true,
-    requestAlertPermission: true,
-  );
-
-  final InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-    iOS: initializationSettingsIOS,
-  );
-
-  // Android için Bildirim Kanalı oluşturma
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'high_importance_channel', // id
-    'Yüksek Öncelikli Bildirimler', // title
-    description:
-        'Bu kanal önemli bildirimler için kullanılır.', // description
-    importance: Importance.high,
-  );
-
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
-  await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings,
-    onDidReceiveNotificationResponse: selectNotification,
-  );
+  // Bildirim servisini başlat
+  await NotificationService().init();
 
   runApp(
     MultiProvider(
@@ -99,38 +62,125 @@ Future<void> main() async {
           initialData: null,
           catchError: (context, error) => null,
         ),
+        // Diğer sağlayıcılar...
       ],
       child: const DepomlaApp(),
     ),
   );
 }
 
-// iOS'ta yerel bildirim alındığında çalışacak fonksiyon
-Future onDidReceiveLocalNotification(
-    int id, String? title, String? body, String? payload) async {
-  // Örneğin, bir dialog gösterilebilir
-  // Ancak bu örnekte boş bırakılmıştır
-}
-
 // Bildirim seçildiğinde çalışacak fonksiyon
 Future selectNotification(NotificationResponse notificationResponse) async {
   final String? payload = notificationResponse.payload;
   if (payload != null) {
-    // Payload'a göre yönlendirme işlemleri
-    // Örneğin:
-    // Navigator.of(context).pushNamed('/notifications');
+    // ChatPage'e yönlendirme işlemi burada hallediliyor.
+    // Ancak bu işlev NotificationService içinde zaten ele alınıyor.
+    // Dolayısıyla burada ekstra bir işlem yapmanıza gerek yok.
   }
 }
 
-class DepomlaApp extends StatelessWidget {
+class DepomlaApp extends StatefulWidget {
   const DepomlaApp({Key? key}) : super(key: key);
+
+  @override
+  State<DepomlaApp> createState() => _DepomlaAppState();
+}
+
+class _DepomlaAppState extends State<DepomlaApp> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _chatsSubscription;
+  final Map<String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>> _messagesSubscriptions = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Kullanıcı oturum açtığında mesajları dinlemeye başla
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null) {
+        _listenToNewMessages(user.uid);
+      } else {
+        // Kullanıcı çıkış yaptığında tüm dinleyicileri iptal et
+        _messagesSubscriptions.forEach((chatId, subscription) {
+          subscription.cancel();
+        });
+        _messagesSubscriptions.clear();
+      }
+    });
+  }
+
+  void _listenToNewMessages(String userId) {
+    // Kullanıcının dahil olduğu tüm sohbetleri dinle
+    _chatsSubscription = _firestore
+        .collection('chats')
+        .where('participants', arrayContains: userId)
+        .snapshots()
+        .listen((chatSnapshot) {
+      for (var chatDoc in chatSnapshot.docs) {
+        final chatId = chatDoc.id;
+
+        // Eğer daha önce dinlenmeyen bir sohbetse, dinleyici ekle
+        if (!_messagesSubscriptions.containsKey(chatId)) {
+          _messagesSubscriptions[chatId] = _firestore
+              .collection('chats')
+              .doc(chatId)
+              .collection('messages')
+              .orderBy('createdAt', descending: true)
+              .limit(1)
+              .snapshots()
+              .listen((messageSnapshot) {
+            if (messageSnapshot.docs.isNotEmpty) {
+              final messageData = messageSnapshot.docs.first.data();
+              final senderId = messageData['senderId'] as String?;
+              final receiverId = messageData['receiverId'] as String?;
+              final isRead = messageData['isRead'] as bool? ?? false;
+              final text = messageData['text'] as String? ?? '';
+
+              // Kendi gönderdiğiniz mesajları bildirimde göstermeyin
+              if (senderId != userId && receiverId == userId && !isRead) {
+                // Kullanıcı bilgilerini al
+                _firestore.collection('users').doc(senderId).get().then((userDoc) {
+                  if (userDoc.exists) {
+                    final user = UserModel.fromDocument(userDoc);
+                    final senderName = user.displayName ?? 'Yeni Mesaj';
+                    final senderPhotoUrl = user.photoURL ?? '';
+
+                    // Bildirim göster
+                    NotificationService().showNotification(
+                      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                      title: senderName,
+                      body: text,
+                      payload: chatId, // Chat ID payload olarak gönderiliyor
+                    );
+                  }
+                }).catchError((e) {
+                  print('Kullanıcı verisi alınırken hata: $e');
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _chatsSubscription?.cancel();
+    _messagesSubscriptions.forEach((chatId, subscription) {
+      subscription.cancel();
+    });
+    _messagesSubscriptions.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Kullanıcının oturum durumunu dinleyin
-    final user = Provider.of<User?>(context);
+    Provider.of<User?>(context);
 
     return MaterialApp(
+      navigatorKey: navigatorKey, // Global navigator key'i ata
       debugShowCheckedModeBanner: false,
       title: 'Depomla',
       theme: ThemeData(

@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 /// Enum representing the type of listing
-enum ListingType {
-  deposit, // For storing personal items
-  storage, // For generating extra income by storing items
-}
+enum ListingType { deposit, storage } // Burada tanımlı
+
 
 /// Model class representing a listing
 class Listing {
@@ -22,9 +21,9 @@ class Listing {
   final String? neighborhood; // Neighborhood ID
   final String? storageType; // Type of storage (e.g., Indoor, Outdoor)
   final Map<String, bool> features; // Security features
-  final String? startDate; // Storage start date
-  final String? endDate; // Storage end date
-
+  final DateTime? startDate; // Storage start date
+  final DateTime? endDate; // Storage end date
+  bool isFavorite;
   // New fields for detailed item information
   final String? itemType; // Type of item (e.g., Motorcycle, Furniture)
   final Map<String, double>? itemDimensions; // Dimensions: length, width, height in meters
@@ -67,12 +66,27 @@ class Listing {
     this.deliveryDetails,
     this.additionalNotes,
     this.preferredFeatures,
+    this.isFavorite = false,
+
   });
 
-  /// Factory constructor to create a Listing from a Firestore document
-  factory Listing.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
+   factory Listing.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
-    // Handle imageUrl being either List<String> or String
+
+    // Yardımcı fonksiyon: Tarihi parse eder
+    DateTime? parseDate(dynamic date) {
+      if (date is Timestamp) {
+        return date.toDate();
+      } else if (date is String) {
+        try {
+          return DateFormat('dd/MM/yyyy').parse(date);
+        } catch (e) {
+          print('Tarih parse edilirken hata: $e');
+        }
+      }
+      return null;
+    }
+
     List<String> imageUrls;
     if (data['imageUrl'] is List) {
       imageUrls = List<String>.from(data['imageUrl'] as List<dynamic>);
@@ -101,8 +115,9 @@ class Listing {
       features: data['features'] != null
           ? Map<String, bool>.from(data['features'] as Map<dynamic, dynamic>)
           : {},
-      startDate: data['startDate']?.toString(),
-      endDate: data['endDate']?.toString(),
+
+     startDate: data['startDate'] != null ? parseDate(data['startDate']) : null,
+      endDate: data['endDate'] != null ? parseDate(data['endDate']) : null,
       itemType: data['itemType']?.toString(),
       itemDimensions: data['itemDimensions'] != null
           ? Map<String, double>.from(
@@ -172,8 +187,8 @@ class Listing {
     String? neighborhood,
     String? storageType,
     Map<String, bool>? features,
-    String? startDate,
-    String? endDate,
+    DateTime? startDate,
+    DateTime? endDate,
     // New fields
     String? itemType,
     Map<String, double>? itemDimensions,

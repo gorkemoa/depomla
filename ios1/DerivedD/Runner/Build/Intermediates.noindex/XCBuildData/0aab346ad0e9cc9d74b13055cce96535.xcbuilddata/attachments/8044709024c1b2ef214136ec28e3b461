@@ -1,0 +1,20 @@
+{
+  "" : {
+    "const-values" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master.swiftconstvalues",
+    "dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master.d",
+    "diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master.dia",
+    "emit-module-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master-emit-module.dia",
+    "swift-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/path_provider_foundation-master.swiftdeps"
+  },
+  "/Users/gorkem/.pub-cache/hosted/pub.dev/path_provider_foundation-2.4.1/darwin/path_provider_foundation/Sources/path_provider_foundation/messages.g.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/messages.g.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/messages.g.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/messages.g.o"
+  },
+  "/Users/gorkem/.pub-cache/hosted/pub.dev/path_provider_foundation-2.4.1/darwin/path_provider_foundation/Sources/path_provider_foundation/PathProviderPlugin.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/PathProviderPlugin.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/PathProviderPlugin.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/path_provider_foundation.build/Objects-normal/arm64/PathProviderPlugin.o"
+  }
+}

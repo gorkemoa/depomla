@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
-  
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -14,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +35,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 1200),
     );
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOutBack),
+      CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeInOutBack,
+      ),
     );
 
     // Animasyonları başlat
@@ -47,28 +50,27 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       Navigator.pushReplacementNamed(context, '/home');
     });
   }
-  
+
   @override
   void dispose() {
     _fadeController.dispose();
     _scaleController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Arka plan degrade
+          /// --- Arka plan degrade ---
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF1E88E5),
-                  Color(0xFF2196F3),
-                  Color(0xFF64B5F6),
-                  Color(0xFFBBDEFB),
+                  Color.fromARGB(255, 108, 146, 241), 
+                  Color.fromARGB(255, 153, 214, 255), 
+                  Color.fromARGB(255, 9, 74, 186), 
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -76,25 +78,27 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
           ),
 
-          // Dekoratif üst form (isteğe bağlı)
+          /// --- Dekoratif daireler (üst) ---
           Positioned(
-            top: -80,
-            left: -80,
+            top: -70,
+            left: -70,
             child: Container(
-              width: 200,
-              height: 200,
+              width: 210,
+              height: 210,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
             ),
           ),
+
+          /// --- Dekoratif daireler (alt) ---
           Positioned(
             bottom: -100,
             right: -100,
             child: Container(
-              width: 250,
-              height: 250,
+              width: 280,
+              height: 280,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -102,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
           ),
 
-          // İçerik
+          /// --- İçerik & Animasyonlar ---
           FadeTransition(
             opacity: _fadeAnimation,
             child: Center(
@@ -111,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Markanın logosu veya gif animasyonu
+                    /// Markanın logosu veya gif animasyonu
                     Image.asset(
                       'assets/depomlaloading.gif',
                       width: 120,
@@ -120,37 +124,37 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     ),
                     const SizedBox(height: 20),
 
-                    // Uygulama ismi (Depomla)
+                    /// Uygulama başlığı
                     Text(
                       'DEPOMLA',
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 34,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.95),
                         letterSpacing: 2.0,
                         shadows: [
                           Shadow(
-                            blurRadius: 10.0,
-                            color: Colors.black45,
+                            blurRadius: 12.0,
+                            color: Colors.black38,
                             offset: const Offset(2, 2),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 10),
-                    
-                    // Hoş geldiniz yazısı
+
+                    /// Hoş geldiniz yazısı
                     Text(
                       'HOŞ GELDİNİZ',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white.withOpacity(0.9),
-                        letterSpacing: 2.0,
+                        letterSpacing: 1.5,
                         shadows: [
                           Shadow(
-                            blurRadius: 10.0,
-                            color: Colors.black45,
+                            blurRadius: 12.0,
+                            color: Colors.black38,
                             offset: const Offset(2, 2),
                           ),
                         ],

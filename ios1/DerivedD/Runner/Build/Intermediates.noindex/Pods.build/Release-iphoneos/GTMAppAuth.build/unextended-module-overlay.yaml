@@ -1,0 +1,23 @@
+{
+  'version': 0,
+  'use-external-names': 'false',
+  'case-sensitive': 'false',
+  'roots': [{
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/GTMAppAuth/GTMAppAuth.framework/Modules"
+    'contents': [{
+      'type': 'file',
+      'name': "module.modulemap",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GTMAppAuth.build/unextended-module.modulemap",
+    }]
+    },
+    {
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/GTMAppAuth/GTMAppAuth.framework/Headers"
+    'contents': [{
+      'type': 'file',
+      'name': "GTMAppAuth-Swift.h",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GTMAppAuth.build/unextended-interface-header.h",
+    }]
+    }]
+}

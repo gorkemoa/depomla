@@ -1,0 +1,12 @@
+version: "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+options: "04b0f3c895bf6214b6daf4a2c7bcc9366cb49c38396e6a8e879e838c6f8fa282"
+build_start_time: [1734588234, 266731000]
+build_end_time: [1734588397, 734121000]
+inputs:
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/AuthSession.swift": [1734588112, 130401036]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/AuthSessionDelegate.swift": [1734588112, 129297276]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/AuthSessionStore.swift": [1734588112, 126681338]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/KeychainStore/GTMOAuth2Compatibility.swift": [1734588112, 137433845]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/KeychainStore/KeychainAttribute.swift": [1734588112, 135872415]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/KeychainStore/KeychainHelper.swift": [1734588112, 132183259]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/GTMAppAuth/GTMAppAuth/Sources/KeychainStore/KeychainStore.swift": [1734588112, 135114909]

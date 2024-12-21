@@ -1,12 +1,17 @@
+// lib/pages/comment_page/chats_page.dart
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../auth_page/login_page.dart';
 import 'chat_page.dart';
 import '../../models/listing_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/user_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ChatsPage extends StatefulWidget {
-  ChatsPage({Key? key}) : super(key: key);
+  const ChatsPage({Key? key}) : super(key: key);
 
   @override
   _ChatsPageState createState() => _ChatsPageState();
@@ -18,26 +23,28 @@ class _ChatsPageState extends State<ChatsPage>
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late TabController _tabController;
 
+  // Kullanıcı ve sohbet önbelleği
+  final Map<String, UserModel> _userCache = {};
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
- 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-  final currentUser = _auth.currentUser;
-  if (currentUser == null) {
-    // Login sayfasını modal olarak aç
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        fullscreenDialog: true, // Modal görünüm
-        builder: (context) => const LoginPage(),
-      ),
-    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        // Login sayfasını modal olarak aç
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            fullscreenDialog: true, // Modal görünüm
+            builder: (context) => const LoginPage(),
+          ),
+        );
+      }
+    });
   }
-});
-  }
-  
 
   @override
   void dispose() {
@@ -45,6 +52,7 @@ class _ChatsPageState extends State<ChatsPage>
     super.dispose();
   }
 
+  // Sohbet listesi oluşturma
   Widget _buildChatList(BuildContext context,
       {String? categoryFilter, bool showUnreadOnly = false}) {
     final currentUser = _auth.currentUser;
@@ -59,11 +67,11 @@ class _ChatsPageState extends State<ChatsPage>
     }
 
     // Tür belirterek Query oluşturuyoruz ve lastMessageTime'a göre sıralıyoruz
- Query<Map<String, dynamic>> chatsQuery = _firestore
-    .collection('chats')
-    .where('participants', arrayContains: currentUser.uid)
-    .where('isHidden', isEqualTo: false) // Gizlenmemiş sohbetleri getir
-    .orderBy('lastMessageTime', descending: true);
+    Query<Map<String, dynamic>> chatsQuery = _firestore
+        .collection('chats')
+        .where('participants', arrayContains: currentUser.uid)
+        .where('isHidden', isEqualTo: false) // Gizlenmemiş sohbetleri getir
+        .orderBy('lastMessageTime', descending: true);
 
     if (categoryFilter != null) {
       chatsQuery = chatsQuery.where('category', isEqualTo: categoryFilter);
@@ -112,8 +120,7 @@ class _ChatsPageState extends State<ChatsPage>
                   .limit(1)
                   .snapshots(),
               builder: (context, messageSnapshot) {
-                if (messageSnapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (messageSnapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox.shrink();
                 }
 
@@ -130,8 +137,7 @@ class _ChatsPageState extends State<ChatsPage>
 
                 final lastMessageDoc = messageSnapshot.data!.docs.first;
                 final lastMessage = lastMessageDoc.data();
-                final messageId =
-                    lastMessageDoc.id; // Mesaj belge kimliğini alıyoruz
+                final messageId = lastMessageDoc.id; // Mesaj belge kimliğini alıyoruz
 
                 // 'isRead' ve 'senderId' alanlarının varlığını kontrol ediyoruz
                 final isUnread = (lastMessage['isRead'] ?? false) == false &&
@@ -158,126 +164,150 @@ class _ChatsPageState extends State<ChatsPage>
     );
   }
 
+  // ChatTile oluşturma
   Widget _buildChatTile(
-  BuildContext context,
-  String chatId,
-  Map<String, dynamic> chatData,
-  Map<String, dynamic> lastMessage,
-  bool isUnread,
-  String? categoryFilter,
-  String messageId,
-) {
-  final currentUser = _auth.currentUser;
+      BuildContext context,
+      String chatId,
+      Map<String, dynamic> chatData,
+      Map<String, dynamic> lastMessage,
+      bool isUnread,
+      String? categoryFilter,
+      String messageId,
+      ) {
+    final currentUser = _auth.currentUser;
 
-  // Diğer katılımcının ID'sini alıyoruz
-  final participants = chatData['participants'] as List<dynamic>? ?? [];
-  if (participants.length < 2) {
-    return const SizedBox.shrink(); // Hiçbir şey göstermiyor
-  }
-  final otherUserId = participants.firstWhere((id) => id != currentUser!.uid, orElse: () => '');
+    // Diğer katılımcının ID'sini alıyoruz
+    final participants = chatData['participants'] as List<dynamic>? ?? [];
+    if (participants.length < 2) {
+      return const SizedBox.shrink(); // Hiçbir şey göstermiyor
+    }
+    final otherUserId = participants.firstWhere((id) => id != currentUser!.uid, orElse: () => '');
 
-  if (otherUserId.isEmpty) {
-    return const SizedBox.shrink(); // Hiçbir şey göstermiyor
-  }
+    if (otherUserId.isEmpty) {
+      return const SizedBox.shrink(); // Hiçbir şey göstermiyor
+    }
 
-  return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-    future: _firestore.collection('users').doc(otherUserId).get(),
-    builder: (context, userSnapshot) {
-      if (!userSnapshot.hasData || userSnapshot.data == null || !userSnapshot.data!.exists) {
-        return const SizedBox.shrink(); // Hiçbir şey göstermiyor
-      }
+    // Kullanıcı verilerini önbellekten al veya Firestore'dan çek
+    if (!_userCache.containsKey(otherUserId)) {
+      _fetchUserData(otherUserId);
+    }
 
-      final userData = userSnapshot.data!.data()!;
-      final userName = userData['displayName'] ?? 'Bilinmeyen Kullanıcı';
-      final userPhotoUrl = userData['photoURL'];
+    final userData = _userCache[otherUserId];
+    if (userData == null) {
+      return const SizedBox.shrink(); // Kullanıcı verisi henüz yüklenmedi
+    }
 
-      return ListTile(
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundImage: userPhotoUrl != null && userPhotoUrl.isNotEmpty
-              ? NetworkImage(userPhotoUrl)
-              : const AssetImage('assets/default_avatar.png') as ImageProvider,
+    final userName = userData.displayName ?? 'Bilinmeyen Kullanıcı';
+    final userPhotoUrl = userData.photoURL ?? '';
+
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 24,
+        backgroundImage: userPhotoUrl.isNotEmpty
+            ? CachedNetworkImageProvider(userPhotoUrl)
+            : const AssetImage('assets/default_avatar.png') as ImageProvider,
+      ),
+      title: Text(
+        userName,
+        style: TextStyle(
+          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+          fontSize: 16,
         ),
-        title: Text(
-          userName,
-          style: TextStyle(
-            fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-          ),
+      ),
+      subtitle: Text(
+        lastMessage['text'] ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+          fontSize: 14,
         ),
-        subtitle: Text(
-          lastMessage['text'] ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        trailing: isUnread
-            ? const CircleAvatar(
-                radius: 5,
-                backgroundColor: Colors.blue,
-              )
-            : const SizedBox.shrink(),
-        onTap: () async {
-          if (isUnread) {
-            try {
-              await _firestore
-                  .collection('chats')
-                  .doc(chatId)
-                  .collection('messages')
-                  .doc(messageId)
-                  .update({'isRead': true});
-            } catch (e) {
-              print('Mesaj güncellenirken hata: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Mesaj güncellenirken bir hata oluştu.')),
-              );
-            }
-          }
-
-          try {
-            final listingId = chatData['listingId'];
-            if (listingId == null || listingId.toString().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('İlgili ilan bulunamadı.')),
-              );
-              return;
-            }
-
-            final listingDoc = await _firestore.collection('listings').doc(listingId).get();
-
-            if (!listingDoc.exists) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('İlgili ilan bulunamadı.')),
-              );
-              return;
-            }
-
-            final listing = Listing.fromDocument(listingDoc);
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatPage(
-                  chatId: chatId,
-                  listing: listing,
-                ),
+      ),
+      trailing: isUnread
+          ? Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
               ),
-            );
+            )
+          : const SizedBox.shrink(),
+      onTap: () async {
+        if (isUnread) {
+          try {
+            await _firestore
+                .collection('chats')
+                .doc(chatId)
+                .collection('messages')
+                .doc(messageId)
+                .update({'isRead': true});
           } catch (e) {
-            print('İlan alınırken hata: $e');
+            print('Mesaj güncellenirken hata: $e');
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('İlan alınırken bir hata oluştu.')),
+              const SnackBar(content: Text('Mesaj güncellenirken bir hata oluştu.')),
             );
           }
-        },
-        onLongPress: () {
-          _showChatOptions(context, chatId);
-        },
-      );
-    },
-  );
-}
+        }
+
+        try {
+          final listingId = chatData['listingId'];
+          if (listingId == null || listingId.toString().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('İlgili ilan bulunamadı.')),
+            );
+            return;
+          }
+
+          final listingDoc = await _firestore.collection('listings').doc(listingId).get();
+
+          if (!listingDoc.exists) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('İlgili ilan bulunamadı.')),
+            );
+            return;
+          }
+
+          final listing = Listing.fromDocument(listingDoc);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatPage(
+                chatId: chatId,
+                listing: listing,
+              ),
+            ),
+          );
+        } catch (e) {
+          print('İlan alınırken hata: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('İlan alınırken bir hata oluştu.')),
+          );
+        }
+      },
+      onLongPress: () {
+        _showChatOptions(context, chatId);
+      },
+    );
+  }
+
+  // Kullanıcı verilerini önbelleğe alma
+  Future<void> _fetchUserData(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final user = UserModel.fromDocument(userDoc);
+        setState(() {
+          _userCache[userId] = user;
+        });
+      }
+    } catch (e) {
+      print('Kullanıcı verisi alınırken hata: $e');
+    }
+  }
+
+  // Sohbet seçeneklerini gösterme
   void _showChatOptions(BuildContext context, String chatId) {
     showModalBottomSheet(
       context: context,
@@ -348,7 +378,7 @@ class _ChatsPageState extends State<ChatsPage>
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
-            'Sohbet',
+            'Sohbetler',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black,
@@ -374,8 +404,7 @@ class _ChatsPageState extends State<ChatsPage>
           children: [
             _buildChatList(context),
             _buildChatList(context, showUnreadOnly: true),
-            _buildChatList(context,
-                categoryFilter: 'important'), // 'deposit' yerine 'important'
+            _buildChatList(context, categoryFilter: 'important'),
           ],
         ),
       ),

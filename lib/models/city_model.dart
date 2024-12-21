@@ -14,4 +14,15 @@ class City {
       sehirAdi: data['sehir_adi'] ?? '',
     );
   }
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is City &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          sehirAdi == other.sehirAdi;
+
+  @override
+  int get hashCode => id.hashCode ^ sehirAdi.hashCode;
 }
+

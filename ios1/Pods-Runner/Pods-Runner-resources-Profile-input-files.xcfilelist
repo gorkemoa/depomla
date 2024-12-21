@@ -1,0 +1,6 @@
+${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh
+${PODS_CONFIGURATION_BUILD_DIR}/Google-Mobile-Ads-SDK-framework/GoogleMobileAdsResources.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/GoogleUserMessagingPlatform-framework/UserMessagingPlatformResources.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/firebase_messaging/firebase_messaging_Privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/google_mobile_ads/google_mobile_ads.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/google_sign_in_ios/google_sign_in_ios_privacy.bundle

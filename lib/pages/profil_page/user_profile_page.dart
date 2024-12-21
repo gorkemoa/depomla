@@ -1,16 +1,18 @@
 // lib/pages/user_page/user_profile_page.dart
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:depomla/ads/ad_container.dart';
+import 'package:depomla/models/listing_model.dart';
+import 'package:depomla/models/user_model.dart';
+import 'package:depomla/pages/auth_page/login_page.dart';
+import 'package:depomla/pages/listing_page/add_listing_page.dart';
+import 'package:depomla/pages/listing_page/listings_details_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../ads/ad_container.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../ads/banner_ad_example.dart';
-import '../../models/listing_model.dart';
-import '../../models/user_model.dart';
-import '../listing_page/listings_details_page.dart';
-import '../listing_page/add_listing_page.dart';
 import '../../services/location_service.dart';
-import '../auth_page/login_page.dart';
 
 class UserProfilePage extends StatefulWidget {
   final UserModel user;
@@ -43,11 +45,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   void initState() {
     super.initState();
-     _initializeAds();
+    _initializeAds();
     _initializeProfile();
   }
 
-  /// Initialize profile by fetching all necessary data in parallel
+  /// Profil bilgilerini ve ilanları yükleyen method
   Future<void> _initializeProfile() async {
     setState(() {
       isLoading = true;
@@ -74,11 +76,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  /// Reklamları başlatma
   Future<void> _initializeAds() async {
     await GlobalAdsService().initialize();
     // Reklamları önceden yüklemeye gerek yok; AdContainer kendi içinde yükler
   }
-  /// Fetch and cache all location data
+
+  /// Tüm konum verilerini çeken method
   Future<void> _fetchAllLocations() async {
     final locationService = LocationService();
 
@@ -114,7 +118,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  /// Retrieve user's location names from cached data
+  /// Kullanıcının konum isimlerini alır
   void _fetchUserLocationNames() {
     cityName = _citiesMap[widget.user.city] ?? "Şehir belirtilmemiş";
     districtName = _districtsMap[widget.user.district] ?? "İlçe belirtilmemiş";
@@ -122,7 +126,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _neighborhoodsMap[widget.user.neighborhood] ?? "Mahalle belirtilmemiş";
   }
 
-  /// Fetch all listings of the user
+  /// Kullanıcının ilanlarını çeken method
   Future<void> _fetchUserListings() async {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
@@ -139,12 +143,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  /// Refresh profile data
+  /// Profil verilerini yenileyen method
   Future<void> _refreshProfile() async {
     await _initializeProfile();
   }
 
-  /// Loading indicator with improved UI
+  /// Yüklenme göstergesi
   Widget _buildEnhancedLoadingIndicator() {
     return Stack(
       children: [
@@ -183,7 +187,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  /// Widget to display user's listings
+  /// Kullanıcının ilanlarını GridView ile gösterme
   Widget _buildUserListings() {
     if (userListings.isEmpty) {
       return const Center(
@@ -194,101 +198,109 @@ class _UserProfilePageState extends State<UserProfilePage> {
       );
     }
 
-    return GridView.builder(
+    List<Widget> listingWidgets = [];
+    for (int i = 0; i < userListings.length; i++) {
+      listingWidgets.add(_buildListingCard(userListings[i]));
+
+      // Her iki ilan arasında reklam ekleme
+      if ((i + 1) % 2 == 0 && i != userListings.length - 1) {
+        listingWidgets.add(const AdContainer());
+      }
+    }
+
+    return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: userListings.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width > 900
-            ? 4
-            : MediaQuery.of(context).size.width > 600
-                ? 3
-                : 2, // Responsive columns
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.75, // Card aspect ratio
-      ),
-      itemBuilder: (context, index) {
-        final listing = userListings[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => ListingDetailPage(listing: listing)),
-            );
-          },
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 4,
-            shadowColor: Colors.black26,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Listing Image
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: listing.imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: listing.imageUrl[0],
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey.shade300,
-                              child: const Center(
-                                  child: CircularProgressIndicator()),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey.shade300,
-                              child: const Icon(Icons.image_not_supported,
-                                  color: Colors.grey, size: 50),
-                            ),
-                          )
-                        : Container(
-                            color: Colors.grey.shade300,
-                            child: const Icon(Icons.image_not_supported,
-                                color: Colors.grey, size: 50),
-                          ),
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: Text(
-                    listing.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    '${listing.price.toStringAsFixed(2)} ₺',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.green.shade700,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
+      crossAxisCount: MediaQuery.of(context).size.width > 900
+          ? 4
+          : MediaQuery.of(context).size.width > 600
+              ? 3
+              : 2, // Responsive sütun sayısı
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      children: listingWidgets,
     );
   }
 
-  /// Widget to display profile information
+  /// Tek bir ilan kartını oluşturan method
+  Widget _buildListingCard(Listing listing) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => ListingDetailPage(listing: listing)),
+        );
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 4,
+        shadowColor: Colors.black26,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // İlan Görseli
+            Expanded(
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: listing.imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: listing.imageUrl[0],
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey.shade300,
+                          child:
+                              const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.image_not_supported,
+                              color: Colors.grey, size: 50),
+                        ),
+                      )
+                    : Container(
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.image_not_supported,
+                            color: Colors.grey, size: 50),
+                      ),
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Text(
+                listing.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                '${listing.price.toStringAsFixed(2)} ₺',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Profil bilgilerini gösteren kart
   Widget _buildProfileInfo() {
     return Card(
       shape: RoundedRectangleBorder(
@@ -300,35 +312,30 @@ class _UserProfilePageState extends State<UserProfilePage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Profile Picture
+            // Profil Resmi
             CircleAvatar(
               radius: 60,
               backgroundImage: widget.user.photoURL != null &&
                       widget.user.photoURL!.isNotEmpty
                   ? CachedNetworkImageProvider(widget.user.photoURL!)
-                  : const AssetImage('assets/default_avatar.png')
+                  : const AssetImage('assets/images/default_avatar.png')
                       as ImageProvider,
             ),
             const SizedBox(height: 16),
-            // User Name
+            // Kullanıcı Adı
             Text(
-              widget.user.displayName,
-              style: const TextStyle(
+              widget.user.displayName.isNotEmpty
+                  ? widget.user.displayName
+                  : 'Kullanıcı',
+              style: GoogleFonts.poppins(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-            // Email Address
-            Text(
-              widget.user.email,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // User Location
+            // E-posta Adresi
+          
+            // Kullanıcı Konumu
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -338,21 +345,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 Flexible(
                   child: Text(
                     '$cityName, $districtName, $neighborhoodName',
-                    style:
-                        const TextStyle(fontSize: 16, color: Colors.grey),
+                    style: const TextStyle(
+                        fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ],
             ),
-           
           ],
         ),
       ),
     );
   }
 
-  /// Widget to display error messages
+  /// Hata mesajını gösteren widget
   Widget _buildError() {
     return Center(
       child: Padding(
@@ -360,7 +366,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline,
+            const Icon(Icons.error_outline,
                 color: Colors.redAccent, size: 60),
             const SizedBox(height: 20),
             Text(
@@ -395,7 +401,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  /// Widget to display the entire profile page
+  /// Tüm sayfanın ana içeriğini oluşturan widget
   @override
   Widget build(BuildContext context) {
     final User? currentUser = _auth.currentUser;
@@ -404,8 +410,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
-          widget.user.displayName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          widget.user.displayName.isNotEmpty
+              ? widget.user.displayName
+              : 'Kullanıcı Profili',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF02aee7),
         elevation: 0,
@@ -422,17 +430,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        // Profile Information
+                        // Profil Bilgileri
                         _buildProfileInfo(),
                         const SizedBox(height: 30),
-                                            const AdContainer(),
-                        const SizedBox(height: 30),
 
-                        // User Listings Header
+                        // Kullanıcının İlanları Başlığı
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Dinamik Kullanıcı Adı ile İlanlar Başlığı
                             Text(
                               '${widget.user.displayName}\'ın İlanları',
                               style: const TextStyle(
@@ -440,11 +445,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                           
-                          ],
+                            // Yeni İlan Ekle Butonu
+                         ],
                         ),
                         const SizedBox(height: 16),
-                        // User Listings
+
+                        // Kullanıcının İlanları
                         _buildUserListings(),
                       ],
                     ),

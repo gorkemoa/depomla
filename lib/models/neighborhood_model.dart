@@ -16,4 +16,16 @@ class Neighborhood {
       districtId: data['districtId'].toString(),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Neighborhood &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          mahalleAdi == other.mahalleAdi &&
+          districtId == other.districtId;
+
+  @override
+  int get hashCode => id.hashCode ^ mahalleAdi.hashCode ^ districtId.hashCode;
 }

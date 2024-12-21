@@ -1,0 +1,22 @@
+dependencies: \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GoogleDataTransport.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/GDTCCTNanopbHelpers.m \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Private/GDTCCTNanopbHelpers.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Internal/GDTCORReachability.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Internal/GDTCORPlatform.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/SystemConfiguration.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/UIKit.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/CoreTelephony.framework/Modules/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCOREvent.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCOREventDataObject.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCORTargets.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCORProductData.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Protogen/nanopb/cct.nanopb.h \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/nanopb.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Protogen/nanopb/compliance.nanopb.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Protogen/nanopb/external_privacy_context.nanopb.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Protogen/nanopb/external_prequest_context.nanopb.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCORClock.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GDTCORConsoleLogger.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleDataTransport/GoogleDataTransport/GDTCCTLibrary/Public/GDTCOREvent+GDTCCTSupport.h

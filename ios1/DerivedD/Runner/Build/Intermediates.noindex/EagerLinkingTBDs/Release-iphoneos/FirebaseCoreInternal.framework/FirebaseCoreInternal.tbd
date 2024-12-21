@@ -1,0 +1,110 @@
+{
+  "main_library": {
+    "exported_symbols": [
+      {
+        "data": {
+          "global": [
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV13dateFormatterSo06NSDateG0CvgZ",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV23__derived_struct_equalsySbAC_ACtFZ",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCN",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCMa",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVN",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCACycfc",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVMa",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCMa",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVAA23HTTPHeaderRepresentableAAWP",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVSQAAMc",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadC11headerValueSSyF",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCACycfC",
+            "_$s10Foundation4DataV20FirebaseCoreInternalE6zippedACyKF",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV4fromACs7Decoder_p_tKcfC",
+            "_$s20FirebaseCoreInternal23HTTPHeaderRepresentableMp",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadC7isEmptySbvg",
+            "_$s10Foundation4DataV20FirebaseCoreInternalE22base64URLEncodedString7optionsSSSo27NSDataBase64EncodingOptionsV_tF",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerC10flushAsync17completionHandleryyAA17HeartbeatsPayloadVYbc_tF",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCMn",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadC11headerValueSSyFTq",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCN",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCfD",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV6encode2toys7Encoder_p_tKF",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCAA23HTTPHeaderRepresentableAAWP",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadC7isEmptySbvpMV",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerC05flushD9FromTodayAA17HeartbeatsPayloadVyF",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVSeAAMc",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVAA23HTTPHeaderRepresentableAAMc",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCfd",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC3logyySSFTq",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCAA23HTTPHeaderRepresentableAAMc",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCACycfc",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCyAcA0eF0VcfC",
+            "_$s20FirebaseCoreInternal23HTTPHeaderRepresentableTL",
+            "_$s10Foundation4DataV20FirebaseCoreInternalE16base64URLEncoded7optionsACSgSS_So27NSDataBase64DecodingOptionsVtcfC",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerC5flushAA17HeartbeatsPayloadVyF",
+            "_FirebaseCoreInternalVersionNumber",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVSEAAMc",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC2idACSS_tcfCTq",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerCMm",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCMn",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC5flushAA01_D19C_HeartbeatsPayloadCyFTq",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCN",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerC2idACSS_tcfC",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC05flushE9FromTodayAA01_D19C_HeartbeatsPayloadCyF",
+            "_$s10Foundation4DataV20FirebaseCoreInternalE8unzippedACyKF",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV13dateFormatterSo06NSDateG0CvpZ",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC10flushAsync17completionHandleryyAA01_D19C_HeartbeatsPayloadCYbc_tFTq",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC10flushAsync17completionHandleryyAA01_D19C_HeartbeatsPayloadCYbc_tF",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCyAcA0eF0Vcfc",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC5flushAA01_D19C_HeartbeatsPayloadCyF",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCfD",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC3logyySSF",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCMa",
+            "_FirebaseCoreInternalVersionString",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV11headerValueSSyF",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerCMn",
+            "_$s20FirebaseCoreInternal19HeartbeatControllerC3logyySSF",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadC7isEmptySbvgTq",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadVMn",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC2idACSS_tcfc",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV7isEmptySbvpMV",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC2idACSS_tcfC",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCyAcA0eF0VcfCTq",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV13dateFormatterSo06NSDateG0Cvau",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCfD",
+            "_$s20FirebaseCoreInternal17HeartbeatsPayloadV7isEmptySbvg",
+            "_$s20FirebaseCoreInternal23_ObjC_HeartbeatsPayloadCACycfC",
+            "_$s20FirebaseCoreInternal25_ObjC_HeartbeatControllerC05flushE9FromTodayAA01_D19C_HeartbeatsPayloadCyFTq"
+          ],
+          "objc_class": [
+            "PodsDummy_FirebaseCoreInternal",
+            "FIRHeartbeatController",
+            "FIRHeartbeatsPayload"
+          ]
+        }
+      }
+    ],
+    "flags": [
+      {
+        "attributes": [
+          "not_app_extension_safe"
+        ]
+      }
+    ],
+    "install_names": [
+      {
+        "name": "@rpath/FirebaseCoreInternal.framework/FirebaseCoreInternal"
+      }
+    ],
+    "swift_abi": [
+      {
+        "abi": 7
+      }
+    ],
+    "target_info": [
+      {
+        "min_deployment": "15",
+        "target": "arm64-ios"
+      }
+    ]
+  },
+  "tapi_tbd_version": 5
+}

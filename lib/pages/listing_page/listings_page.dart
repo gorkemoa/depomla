@@ -5,9 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/listing_model.dart';
 import '../../ads/ad_container.dart';
+import 'filter_modal.dart';
 import 'listing_card.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:provider/provider.dart';
 
 class ListingsPage extends StatefulWidget {
   final ListingType category;
@@ -19,17 +18,23 @@ class ListingsPage extends StatefulWidget {
 }
 
 class _ListingsPageState extends State<ListingsPage> {
-  List<Listing> cachedListings = [];
-  bool isGrid = true;
-  bool isLoading = true;
-  bool isLoadingMore = false;
-  DocumentSnapshot? lastDocument;
-  bool hasMoreData = true;
-
   final ScrollController _scrollController = ScrollController();
 
+  List<Listing> cachedListings = [];
+  bool isLoading = true;
+  bool isLoadingMore = false;
+  bool hasMoreData = true;
+  DocumentSnapshot? lastDocument;
+  bool isGrid = true;
+
+  String searchQuery = '';
+  double? minPrice;
+  double? maxPrice;
+  String? selectedItemType;
+  String? selectedStorageType;
+
   static const int _limit = 20;
-  static const int _adFrequency = 3; // Her 3 itemde bir reklam göster
+  static const int _adFrequency = 2; // Reklam gösterim sıklığı artırıldı
 
   @override
   void initState() {
@@ -48,18 +53,15 @@ class _ListingsPageState extends State<ListingsPage> {
   }
 
   void _enableOfflinePersistence() {
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-    );
+    FirebaseFirestore.instance.settings =
+        const Settings(persistenceEnabled: true);
   }
 
   Future<void> fetchListings({bool forceRefresh = false}) async {
     if (isLoadingMore || !hasMoreData) return;
 
     setState(() {
-      if (lastDocument == null) {
-        isLoading = true;
-      }
+      if (lastDocument == null) isLoading = true;
       isLoadingMore = lastDocument != null;
     });
 
@@ -71,39 +73,67 @@ class _ListingsPageState extends State<ListingsPage> {
           .orderBy('createdAt', descending: true)
           .limit(_limit);
 
-      if (lastDocument != null) {
-        query = query.startAfterDocument(lastDocument!);
+      // Filtreler
+      if (minPrice != null) {
+        query = query.where('price', isGreaterThanOrEqualTo: minPrice);
+      }
+      if (maxPrice != null) {
+        query = query.where('price', isLessThanOrEqualTo: maxPrice);
       }
 
-      QuerySnapshot<Map<String, dynamic>> snapshot = await query.get(
-        forceRefresh ? const GetOptions(source: Source.server) : null,
-      );
+      if (selectedItemType != null && selectedItemType!.isNotEmpty) {
+        query = query.where('itemType', isEqualTo: selectedItemType);
+      }
+
+      if (selectedStorageType != null && selectedStorageType!.isNotEmpty) {
+        query = query.where('storageType', isEqualTo: selectedStorageType);
+      }
+
+      // Arama
+      if (searchQuery.isNotEmpty) {
+        query = query
+            .orderBy('title')
+            .startAt([searchQuery]).endAt([searchQuery + '\uf8ff']);
+      }
+
+      if (lastDocument != null) query = query.startAfterDocument(lastDocument!);
+
+      final snapshot = await query
+          .get(forceRefresh ? const GetOptions(source: Source.server) : null);
 
       if (snapshot.docs.isNotEmpty) {
-        setState(() {
-          lastDocument = snapshot.docs.last;
-          cachedListings
-              .addAll(snapshot.docs.map((doc) => Listing.fromDocument(doc)));
-        });
+        if (mounted) {
+          setState(() {
+            lastDocument = snapshot.docs.last;
+            cachedListings
+                .addAll(snapshot.docs.map((doc) => Listing.fromDocument(doc)));
+          });
+        }
       } else {
-        setState(() {
-          hasMoreData = false;
-        });
+        if (mounted) {
+          setState(() {
+            hasMoreData = false;
+          });
+        }
       }
     } catch (e) {
-      print('Veri alınırken hata oluştu: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veri alınırken bir hata oluştu: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Veri alınırken hata: $e')),
+        );
+      }
     } finally {
-      setState(() {
-        isLoading = false;
-        isLoadingMore = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          isLoadingMore = false;
+        });
+      }
     }
   }
 
   Future<void> refreshListings() async {
+    if (!mounted) return;
     setState(() {
       cachedListings.clear();
       lastDocument = null;
@@ -111,6 +141,17 @@ class _ListingsPageState extends State<ListingsPage> {
       isLoading = true;
     });
     await fetchListings(forceRefresh: true);
+  }
+
+  void resetAndFetch() {
+    if (!mounted) return;
+    setState(() {
+      cachedListings.clear();
+      lastDocument = null;
+      hasMoreData = true;
+      isLoading = true;
+    });
+    fetchListings(forceRefresh: true);
   }
 
   bool isAdPosition(int index, int frequency) {
@@ -121,19 +162,12 @@ class _ListingsPageState extends State<ListingsPage> {
     return index - ((index + 1) / (frequency + 1)).floor();
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   Widget buildListView() {
     final totalAds = (cachedListings.length / _adFrequency).floor();
     final totalItemCount = cachedListings.length + totalAds;
 
     return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
       itemCount: totalItemCount,
       itemBuilder: (context, index) {
         if (isAdPosition(index, _adFrequency)) {
@@ -147,9 +181,7 @@ class _ListingsPageState extends State<ListingsPage> {
           final listing = cachedListings[listingIndex];
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ListingCard(
-              listing: listing,
-            ),
+            child: ListingCard(listing: listing),
           );
         } else {
           return const SizedBox.shrink();
@@ -163,14 +195,13 @@ class _ListingsPageState extends State<ListingsPage> {
     final totalItemCount = cachedListings.length + totalAds;
 
     return GridView.builder(
-      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
       itemCount: totalItemCount,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 0.75,
+        crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        childAspectRatio: MediaQuery.of(context).size.width < 600 ? 0.68 : 0.7,
       ),
       itemBuilder: (context, index) {
         if (isAdPosition(index, _adFrequency)) {
@@ -179,9 +210,7 @@ class _ListingsPageState extends State<ListingsPage> {
         final listingIndex = getListingIndex(index, _adFrequency);
         if (listingIndex < cachedListings.length) {
           final listing = cachedListings[listingIndex];
-          return ListingCard(
-            listing: listing,
-          );
+          return ListingCard(listing: listing);
         } else {
           return const SizedBox.shrink();
         }
@@ -190,66 +219,155 @@ class _ListingsPageState extends State<ListingsPage> {
   }
 
   Widget buildListViewOptimized() {
-    // Geçişi daha akıcı hale getirmek için AnimatedSwitcher kullanıyoruz
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: isGrid ? buildGridView() : buildListView(),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(child: child, opacity: animation);
-      },
+    // AnimatedSwitcher kaldırıldı ve doğrudan koşullu render yapıldı
+    return isGrid ? buildGridView() : buildListView();
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(
+        color: Color(0xFF2196F3),
+      ));
+    } else if (cachedListings.isEmpty) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Aradığınız kriterlerde ilan bulunamadı.',
+            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[800]),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    } else {
+      return RefreshIndicator(
+        color: const Color(0xFF2196F3),
+        onRefresh: refreshListings,
+        child: buildListViewOptimized(),
+      );
+    }
+  }
+
+  void _openFilterSheet() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FilterPage(
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          selectedItemType: selectedItemType,
+          selectedStorageType: selectedStorageType,
+          onApply: (newMin, newMax, newItemType, newStorageType) {
+            if (mounted) {
+              setState(() {
+                minPrice = newMin;
+                maxPrice = newMax;
+                selectedItemType = newItemType;
+                selectedStorageType = newStorageType;
+              });
+              resetAndFetch();
+            }
+          },
+        ),
+      ),
     );
+  }
+
+  Widget _buildTopBarElements() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height:79), // Üstten daha küçük bir boşluk
+        Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.92),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: TextField(
+            onChanged: (value) => searchQuery = value.trim(),
+            onSubmitted: (_) => resetAndFetch(),
+            style: GoogleFonts.poppins(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Başlık ile ara...',
+              hintStyle: TextStyle(color: Colors.grey[600]),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color get _appBarColor => const Color(0xFF2196F3);
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.category == ListingType.deposit
-              ? 'Depola İlanlar'
-              : 'Depolama İlanları',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(isGrid ? Icons.list : Icons.grid_view),
-            onPressed: () {
-              setState(() {
-                isGrid = !isGrid;
-              });
-            },
-            tooltip: isGrid ? 'Liste Görünümü' : 'Grid Görünümü',
-          ),
-        ],
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF02aee7), Color(0xFF00d0ea)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      backgroundColor: Colors.grey[100],
+      body: NestedScrollView(
+        controller: _scrollController,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              titleSpacing: 16,
+              title: Text(
+                widget.category == ListingType.deposit
+                    ? 'Depola İlanları'
+                    : 'Depolama İlanları',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+              pinned: true,
+              floating: true,
+              expandedHeight: 92, // Arama çubuğuna yeterli alan tanındı
+              backgroundColor: _appBarColor,
+              actions: [
+                IconButton(
+                  icon: Icon(
+                      isGrid
+                          ? Icons.view_list_rounded
+                          : Icons.grid_view_rounded,
+                      color: Colors.white),
+                  onPressed: () => setState(() => isGrid = !isGrid),
+                  tooltip: isGrid ? 'Liste Görünümü' : 'Grid Görünümü',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.filter_alt, color: Colors.white),
+                  onPressed: _openFilterSheet,
+                  tooltip: 'Filtreler',
+                ),
+                const SizedBox(width: 8),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                background: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: _buildTopBarElements(),
+                ),
+              ),
             ),
-          ),
-        ),
+          ];
+        },
+        body: _buildBody(),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: refreshListings,
-              child: cachedListings.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          'Bu kategoride henüz ilan bulunamadı.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  : buildListViewOptimized(),
-            ),
     );
   }
 }

@@ -1,0 +1,23 @@
+{
+  'version': 0,
+  'use-external-names': 'false',
+  'case-sensitive': 'false',
+  'roots': [{
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/FirebaseCoreInternal/FirebaseCoreInternal.framework/Modules"
+    'contents': [{
+      'type': 'file',
+      'name': "module.modulemap",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseCoreInternal.build/unextended-module.modulemap",
+    }]
+    },
+    {
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/FirebaseCoreInternal/FirebaseCoreInternal.framework/Headers"
+    'contents': [{
+      'type': 'file',
+      'name': "FirebaseCoreInternal-Swift.h",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseCoreInternal.build/unextended-interface-header.h",
+    }]
+    }]
+}

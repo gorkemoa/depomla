@@ -16,4 +16,15 @@ class District {
       cityId: data['cityId'].toString(),
     );
   }
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is District &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          ilceAdi == other.ilceAdi &&
+          cityId == other.cityId;
+
+  @override
+  int get hashCode => id.hashCode ^ ilceAdi.hashCode ^ cityId.hashCode;
 }

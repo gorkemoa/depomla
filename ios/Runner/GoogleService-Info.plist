@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.depomla</string>
+	<string>com.gorkem.depomla</string>
 	<key>PROJECT_ID</key>
 	<string>depomla-app</string>
 	<key>STORAGE_BUCKET</key>

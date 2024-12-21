@@ -1,0 +1,26 @@
+dependencies: \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GTMAppAuth.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GoogleSignIn.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignIn.m \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/Public/GoogleSignIn/GIDSignIn.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/TargetConditionals.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/UIKit.framework/Modules/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignIn_Private.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/Public/GoogleSignIn/GIDConfiguration.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/Public/GoogleSignIn/GIDGoogleUser.h \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GTMSessionFetcher.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/Public/GoogleSignIn/GIDProfileData.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/Public/GoogleSignIn/GIDSignInResult.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDEMMSupport.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignInInternalOptions.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignInPreferences.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDCallbackQueue.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDScopes.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignInCallbackSchemes.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDAuthStateMigration.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDEMMErrorHandler.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDGoogleUser_Private.h \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/AppAuth.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDProfileData_Private.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/GoogleSignIn/GoogleSignIn/Sources/GIDSignInResult_Private.h

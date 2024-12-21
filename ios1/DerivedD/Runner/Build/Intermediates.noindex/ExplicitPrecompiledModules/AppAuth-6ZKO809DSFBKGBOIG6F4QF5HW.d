@@ -1,0 +1,43 @@
+moduledependenciestarget: \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/AppAuth.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/Target\ Support\ Files/AppAuth/AppAuth-umbrella.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/UIKit.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/usr/include/TargetConditionals.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthState.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthStateChangeDelegate.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthStateErrorDelegate.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthorizationRequest.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDExternalUserAgentRequest.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDResponseTypes.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDScopes.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthorizationResponse.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDAuthorizationService.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDError.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDErrorUtilities.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDExternalUserAgent.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDExternalUserAgentSession.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDGrantTypes.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDIDToken.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDRegistrationRequest.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDRegistrationResponse.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDScopeUtilities.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDServiceConfiguration.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDServiceDiscovery.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDTokenRequest.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDTokenResponse.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDTokenUtilities.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDURLSessionProvider.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDEndSessionRequest.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDEndSessionResponse.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDClientMetadataParameters.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDDefines.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDFieldMapping.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuthCore/OIDURLQueryComponent.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth/iOS/OIDAuthState+IOS.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth/iOS/OIDAuthorizationService+IOS.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth/iOS/OIDExternalUserAgentIOS.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth/iOS/OIDExternalUserAgentIOSCustomBrowser.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/AppAuth/Sources/AppAuth/iOS/OIDExternalUserAgentCatalyst.h

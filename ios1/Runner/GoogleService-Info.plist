@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>30104908258-6c34u51voeb64vadk8b11qv2a8fgvs50.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.30104908258-6c34u51voeb64vadk8b11qv2a8fgvs50</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>30104908258-u8b8f6gbj9dqjoq7ijq3vp3di218pnib.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC5YZsWwVvZvgYMn0Y9P2pzf1G1gXHMHn0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>30104908258</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.gorkem.depomla</string>
+	<key>PROJECT_ID</key>
+	<string>depomla-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>depomla-app.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:30104908258:ios:1ab81bd4cb27d8ddbdc9bb</string>
+	<key>DATABASE_URL</key>
+	<string>https://depomla-app-default-rtdb.europe-west1.firebasedatabase.app</string>
+	
+</dict>
+</plist>

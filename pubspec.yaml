@@ -16,25 +16,25 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Firebase packages
-  firebase_core:
-  cloud_firestore:
-  firebase_storage:
-  firebase_auth:
-  firebase_messaging:
-  google_mobile_ads:
+  firebase_core: ^3.8.1
+  cloud_firestore: ^5.5.1
+  firebase_storage: ^12.3.7
+  firebase_auth: 
+  firebase_messaging: ^15.1.6
+  google_mobile_ads: ^5.2.0
+
   # Diğer paketler
   image_picker: ^1.1.2
   uuid: ^4.5.1
-  intl: ^0.19.0
-  rxdart: ^0.27.6
-  google_sign_in: ^5.4.2
+  intl: ^0.20.1
+  rxdart: ^0.28.0
+  google_sign_in: ^6.2.2
   provider: ^6.0.5
   font_awesome_flutter: ^10.8.0
   google_fonts: ^6.2.1
-  carousel_slider: 
+  carousel_slider: ^5.0.0
   cached_network_image: ^3.2.3
-  flutter_native_splash:
-
+  auto_size_text:
   # Lints for better code practices
   flutter_lints: ^5.0.0
   flutter_local_notifications: ^18.0.1
@@ -42,6 +42,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_native_splash: ^2.4.3
+  flutter_launcher_icons: ^0.14.2 # 'flutter_icons' yerine kullanılıyor
 
 flutter_native_splash:
   color: "#02aee7" # Uygulamanızın ana rengi
@@ -52,12 +54,10 @@ flutter_native_splash:
   android_gravity: center
   ios_content_mode: scaleAspectFit
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/depomicon.png"
-
-
 
 flutter:
   uses-material-design: true
@@ -71,9 +71,6 @@ flutter:
     - assets/ilan_ver.png
     - assets/depomlablack.png
     - assets/depomlaloading.gif
-fonts:
-    - family: Roboto
-      fonts:
-        - asset: fonts/Roboto-Regular.ttf
-        - asset: fonts/Roboto-Bold.ttf
-          weight: 700  
+    - assets/background.jpg
+    - assets/background_register.jpg
+  

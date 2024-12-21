@@ -1,0 +1,37 @@
+dependencies: \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseMessaging.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessaging.m \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Public/FirebaseMessaging/FIRMessaging.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/GoogleUtilities.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FirebaseCoreInternal.h \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseCore.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRAppInternal.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponent.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponentContainer.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponentType.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRHeartbeatLogger.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRLibrary.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRLogger.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseInstallations/Source/Library/Private/FirebaseInstallationsInternal.h \
+  /Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseInstallations.build/module.modulemap \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Interop/FIRMessagingInterop.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingAnalytics.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/Interop/Analytics/Public/FIRAnalyticsInterop.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingCode.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingConstants.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingContextManagerService.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingDefines.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingLogger.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingPubSub.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingRemoteNotificationsProxy.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingRmqManager.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingSyncMessageManager.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingUtilities.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessaging_Private.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/NSError+FIRMessaging.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingAuthService.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingCheckinService.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingTokenInfo.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingAPNSInfo.h \
+  /Users/gorkem/Projeler/depomla/ios/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingTokenManager.h

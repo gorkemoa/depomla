@@ -1,0 +1,145 @@
+{
+  "" : {
+    "const-values" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master.swiftconstvalues",
+    "dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master.d",
+    "diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master.dia",
+    "emit-module-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master-emit-module.dia",
+    "swift-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirebaseFirestore-master.swiftdeps"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/AsyncAwait/CollectionReference+AsyncAwait.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+AsyncAwait.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+AsyncAwait.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+AsyncAwait.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/AsyncAwait/Firestore+AsyncAwait.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Firestore+AsyncAwait.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Firestore+AsyncAwait.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Firestore+AsyncAwait.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/CodableErrors.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodableErrors.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodableErrors.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodableErrors.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/CodablePassThroughTypes.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodablePassThroughTypes.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodablePassThroughTypes.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CodablePassThroughTypes.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/CollectionReference+WriteEncodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+WriteEncodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+WriteEncodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/CollectionReference+WriteEncodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentID.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentID.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentID.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentID.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentReference+Codable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+Codable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+Codable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+Codable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentReference+ReadDecodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+ReadDecodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+ReadDecodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+ReadDecodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentReference+WriteEncodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+WriteEncodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+WriteEncodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentReference+WriteEncodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentSnapshot+ReadDecodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentSnapshot+ReadDecodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentSnapshot+ReadDecodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/DocumentSnapshot+ReadDecodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/EncoderDecoder.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/EncoderDecoder.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/EncoderDecoder.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/EncoderDecoder.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/ExplicitNull.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ExplicitNull.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ExplicitNull.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ExplicitNull.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/FieldValue+Encodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Encodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Encodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Encodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/GeoPoint+Codable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/GeoPoint+Codable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/GeoPoint+Codable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/GeoPoint+Codable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/ServerTimestamp.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ServerTimestamp.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ServerTimestamp.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/ServerTimestamp.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/Timestamp+Codable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Timestamp+Codable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Timestamp+Codable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Timestamp+Codable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/TimestampDecodingStrategy.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampDecodingStrategy.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampDecodingStrategy.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampDecodingStrategy.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/TimestampEncodingStrategy.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampEncodingStrategy.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampEncodingStrategy.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/TimestampEncodingStrategy.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/Transaction+WriteEncodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Transaction+WriteEncodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Transaction+WriteEncodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/Transaction+WriteEncodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/VectorValue+Codable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Codable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Codable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Codable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/WriteBatch+WriteEncodable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/WriteBatch+WriteEncodable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/WriteBatch+WriteEncodable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/WriteBatch+WriteEncodable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/PropertyWrapper/FirestoreQuery.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQuery.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQuery.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQuery.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/PropertyWrapper/FirestoreQueryObservable.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQueryObservable.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQueryObservable.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FirestoreQueryObservable.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/PropertyWrapper/QueryPredicate.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/QueryPredicate.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/QueryPredicate.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/QueryPredicate.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/SwiftAPI/FieldValue+Swift.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Swift.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Swift.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/FieldValue+Swift.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/SwiftAPI/VectorValue+Swift.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Swift.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Swift.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/VectorValue+Swift.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseFirestore/Firestore/Swift/Source/SwiftHeaderWorkaround.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/SwiftHeaderWorkaround.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/SwiftHeaderWorkaround.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseFirestore.build/Objects-normal/arm64/SwiftHeaderWorkaround.o"
+  }
+}

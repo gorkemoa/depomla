@@ -1,21 +1,14 @@
-// listing_model.dart içindeki ListingType tanımını kaldırın.
+// lib/pages/home_page.dart
 
-// add_listing_page.dart içindeki ListingType tanımını koruyun:
-// enum ListingType { deposit, storage }
-
-// home_page.dart içinde:
 import 'package:flutter/material.dart';
-import '../models/listing_model.dart';
-import 'listing_page/listings_page.dart';
+import '../models/listing_model.dart'; // ListingType sadece buradan geliyor
+import 'listing_page/listings_page.dart'; // Burada ListingType tanımı olmamalı
 import 'comment_page/chats_page.dart';
-import 'listing_page/add_listing_page.dart'; // Burada ListingType tanımlı
+import 'listing_page/add_listing_page.dart'; 
 import 'profil_page/profile_page.dart';
 import 'package:depomla/pages/listing_page/my_listings_page.dart';
-import 'package:depomla/notifications_page.dart';
-import 'package:depomla/pages/auth_page/settings_page.dart';
-
 class HomePage extends StatefulWidget {
-  final ListingType selectedCategory; // Artık ListingType add_listing_page.dart'tan geliyor
+  final ListingType selectedCategory;
 
   const HomePage({super.key, required this.selectedCategory});
 
@@ -31,7 +24,7 @@ class _HomePageState extends State<HomePage> {
     final List<Widget> _pages = [
       ListingsPage(category: widget.selectedCategory),
       ChatsPage(),
-      const AddListingPage(),
+       AddListingPage(),
       const MyListingsPage(),
       ProfilePage(),
     ];

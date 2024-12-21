@@ -1,0 +1,130 @@
+{
+  "" : {
+    "const-values" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master.swiftconstvalues",
+    "dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master.d",
+    "diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master.dia",
+    "emit-module-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master-emit-module.dia",
+    "swift-dependencies" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/FirebaseStorage-master.swiftdeps"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/AsyncAwait.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/AsyncAwait.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/AsyncAwait.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/AsyncAwait.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageDeleteTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDeleteTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDeleteTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDeleteTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageFetcherService.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageFetcherService.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageFetcherService.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageFetcherService.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageGetDownloadURLTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetDownloadURLTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetDownloadURLTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetDownloadURLTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageGetMetadataTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetMetadataTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetMetadataTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageGetMetadataTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageInternalTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageInternalTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageInternalTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageInternalTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageListTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StoragePath.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StoragePath.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StoragePath.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StoragePath.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageTaskState.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskState.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskState.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskState.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageTokenAuthorizer.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTokenAuthorizer.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTokenAuthorizer.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTokenAuthorizer.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageUpdateMetadataTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUpdateMetadataTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUpdateMetadataTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUpdateMetadataTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Internal/StorageUtils.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUtils.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUtils.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUtils.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Result.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Result.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Result.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Result.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/Storage.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Storage.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Storage.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/Storage.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageConstants.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageConstants.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageConstants.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageConstants.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageDownloadTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDownloadTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDownloadTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageDownloadTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageError.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageError.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageError.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageError.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageListResult.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListResult.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListResult.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageListResult.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageMetadata.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageMetadata.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageMetadata.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageMetadata.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageObservableTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageObservableTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageObservableTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageObservableTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageReference.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageReference.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageReference.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageReference.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTask.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageTaskSnapshot.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskSnapshot.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskSnapshot.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageTaskSnapshot.o"
+  },
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageUploadTask.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUploadTask.o",
+    "llvm-bc" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUploadTask.bc",
+    "object" : "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/FirebaseStorage.build/Objects-normal/arm64/StorageUploadTask.o"
+  }
+}

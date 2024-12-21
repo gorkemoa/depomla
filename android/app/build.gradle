@@ -1,21 +1,17 @@
-// android/app/build.gradle
-
 plugins {
     id "com.android.application"
-    // START: FlutterFire Configuration
-    id 'com.google.gms.google-services'
-    // END: FlutterFire Configuration
+    id 'com.google.gms.google-services' // Google Services
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
+    id "dev.flutter.flutter-gradle-plugin" // Flutter Gradle Plugin
 }
 
 android {
-    namespace = "com.gorkem.depomla"
-    compileSdk = 34 // En son compileSdk sürümünü kullanın
-    ndkVersion = flutter.ndkVersion
+    namespace "com.gorkem.depomla"
+    compileSdk 34
 
-    compileOptions {        
+    ndkVersion flutter.ndkVersion // Flutter'ın NDK sürümünü kullanın
+
+    compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
         coreLibraryDesugaringEnabled true
@@ -25,28 +21,36 @@ android {
         jvmTarget = "11"
     }
 
-   defaultConfig {
-    applicationId "com.gorkem.depomla"
-    minSdkVersion 23
-    targetSdkVersion 33
-    versionCode 1
-    versionName "1.0.0"
-}
+    defaultConfig {
+        applicationId "com.gorkem.depomla"
+        minSdkVersion 23
+        targetSdkVersion 34 // `compileSdk` ile uyumlu olsun
+        versionCode 1
+        versionName "1.0.0"
+    }
 
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            minifyEnabled true // Optimizasyon için (isteğe bağlı)
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 
 flutter {
-    source = "../.."
+    source "../.."
 }
 
 dependencies {
-    implementation 'com.google.android.gms:play-services-ads:23.6.0' // En son sürümü kullanın
+    // Flutter bağımlılıkları
+    implementation 'com.google.android.gms:play-services-ads:23.6.0' // Google Ads en güncel sürüm
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.3"
-}
 
-// Google Services Plugin'i sadece plugins { } bloğunda tanımlayın
+    // Kotlin bağımlılıkları (örnek)
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0"
+
+    // AndroidX bağımlılıkları (isteğe bağlı)
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+}

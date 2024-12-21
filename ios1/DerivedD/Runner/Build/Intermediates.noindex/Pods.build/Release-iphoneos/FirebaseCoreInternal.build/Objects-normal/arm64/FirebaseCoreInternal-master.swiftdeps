@@ -1,0 +1,24 @@
+version: "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+options: "7774b7ee2e149b8083397cff7b50e29f21a768a2f3e21f0c8872e99a3daa0c29"
+build_start_time: [1734588234, 296572000]
+build_end_time: [1734588306, 887793000]
+inputs:
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/Heartbeat.swift": [1734588110, 365785349]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatController.swift"
+  : [1734588110, 369111669]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatLoggingTestUtils.swift"
+  : [1734588110, 369751632]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatStorage.swift"
+  : [1734588110, 371886275]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatsBundle.swift"
+  : [1734588110, 372232695]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatsPayload.swift"
+  : [1734588110, 373093536]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/RingBuffer.swift": [1734588110, 366118727]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/Storage.swift": [1734588110, 365249678]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/StorageFactory.swift": [1734588110, 373808375]
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/WeakContainer.swift": [1734588110, 372710782]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/_ObjC_HeartbeatController.swift"
+  : [1734588110, 366494022]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseCoreInternal/FirebaseCore/Internal/Sources/HeartbeatLogging/_ObjC_HeartbeatsPayload.swift"
+  : [1734588110, 369458588]

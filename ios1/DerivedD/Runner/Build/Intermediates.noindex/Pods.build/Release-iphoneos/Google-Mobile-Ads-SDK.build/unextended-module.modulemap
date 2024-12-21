@@ -1,0 +1,10 @@
+framework module Google_Mobile_Ads_SDK {
+  umbrella header "Google-Mobile-Ads-SDK-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module Google_Mobile_Ads_SDK.__Swift {
+  exclude header "Google_Mobile_Ads_SDK-Swift.h"
+}

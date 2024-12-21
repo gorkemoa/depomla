@@ -1,0 +1,8 @@
+version: "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+options: "cf3c8a04cf48ea3278a5f6ef7e61843ab9567d31007aafebae93ead139847647"
+build_start_time: [1734588187, 624415000]
+build_end_time: [1734588234, 630610000]
+inputs:
+  "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseSharedSwift/FirebaseSharedSwift/Sources/FirebaseRemoteConfigValueDecoding.swift": [1734588111, 969216467]
+  ? "/Users/gorkem/Projeler/depomla/ios/Pods/FirebaseSharedSwift/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift"
+  : [1734588111, 967027324]

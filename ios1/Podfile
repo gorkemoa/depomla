@@ -1,0 +1,63 @@
+# ios/Podfile
+
+# Projenizin global platform hedefini tanımlayın
+platform :ios, '15.0'
+
+# CocoaPods analizlerini devre dışı bırakın
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. Eğer pod install komutunu manuel olarak çalıştırıyorsanız, önce flutter pub get komutunu çalıştırdığınızdan emin olun."
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT, #{generated_xcode_build_settings_path} içinde bulunamadı. Generated.xcconfig dosyasını silmeyi ve ardından flutter pub get komutunu çalıştırmayı deneyin."
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  # Flutter Pods
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Firebase Pods
+  pod 'Firebase/Core'
+  pod 'Firebase/Auth'
+  pod 'Firebase/Firestore'
+  pod 'GoogleSignIn'
+
+  # Google Mobile Ads SDK
+  pod 'Google-Mobile-Ads-SDK'
+
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+
+    # Tüm Pod'ların iOS dağıtım hedefini 15.0 olarak ayarlayın ve Bitcode'u devre dışı bırakın
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
+  end
+end

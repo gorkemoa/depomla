@@ -1,4 +1,5 @@
 // lib/pages/auth_page/register_page.dart
+
 import 'package:depomla/pages/auth_page/post_login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,15 +17,20 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // Kontrolleri başlatma
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final TextEditingController displayNameController = TextEditingController();
 
-  // Kayıt olma fonksiyonu
+  bool isProcessing = false; // Butonun tıklanma durumunu kontrol etmek için
+
   Future<void> signUpUser() async {
+    if (isProcessing) return; // Eğer işlem devam ediyorsa yeni bir işlem başlatma
+    setState(() {
+      isProcessing = true;
+    });
+
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
@@ -37,6 +43,9 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
       );
+      setState(() {
+        isProcessing = false;
+      });
       return;
     }
 
@@ -44,12 +53,13 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Şifreler eşleşmiyor.')),
       );
+      setState(() {
+        isProcessing = false;
+      });
       return;
     }
 
-    // Kayıt işlemi sırasında hata yönetimi
     try {
-      // Kayıt işlemi başlamadan önce loading göstergesi
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -62,36 +72,36 @@ class _RegisterPageState extends State<RegisterPage> {
         },
       );
 
-      // AuthService kullanarak kullanıcıyı kaydet
       User? user = await AuthService().signUpWithEmailAndPassword(
         email,
         password,
         displayName,
       );
 
-      // Loading göstergesini kapatma
       Navigator.pop(context);
 
       if (user != null) {
-        // Kayıt başarılı, ana sayfaya yönlendir
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const PostLoginPage()),
         );
       } else {
-        // Kayıt başarısız
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Kayıt olma işlemi başarısız oldu.')),
         );
       }
     } catch (e) {
-      // Loading göstergesini kapatma
       Navigator.pop(context);
 
-      // Hata mesajı gösterme
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hata: $e')),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 
@@ -106,164 +116,198 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Ekran boyutlarını almak için
+    // Cihazın ekran boyutlarını al
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      // Arka plan rengini değiştirebilirsiniz
-      backgroundColor: const Color.fromARGB(255, 132, 186, 237),
-      appBar: AppBar(
-        title: const Text('Kayıt Ol'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // Geri dönüş işlemi
-          },
-        ),
-      backgroundColor: const Color.fromARGB(255, 132, 186, 237),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Logo
-                SizedBox(
-                  width: size.width * 0.6,
-                  child: Image.asset(
-                    'assets/depomla.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Kullanıcı Adı Girişi
-                MyTextfield(
-                  controller: displayNameController,
-                  hintText: 'Kullanıcı Adı',
-                  obscureText: false,
-                ),
-                const SizedBox(height: 20),
-                // E-posta Girişi
-                MyTextfield(
-                  controller: emailController,
-                  hintText: 'E-posta',
-                  obscureText: false,
-                ),
-                const SizedBox(height: 20),
-                // Şifre Girişi
-                MyTextfield(
-                  controller: passwordController,
-                  hintText: 'Şifre',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 20),
-                // Şifre Tekrar Girişi
-                MyTextfield(
-                  controller: confirmPasswordController,
-                  hintText: 'Şifre Tekrar',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 30),
-                // Kayıt Ol Butonu
-                MyButton(
-                  onTap: signUpUser,
-                  text: 'Kayıt Ol',
-                  color: const Color(0xFF02aee7),
-                  textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 19,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                // Veya
-                 Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: const Color.fromARGB(190, 12, 133, 52),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        "veya",
-                        style: TextStyle(color: Color.fromARGB(255, 59, 56, 56)),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: const Color.fromARGB(190, 12, 133, 52),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Sosyal Giriş Butonları (Google, Apple vb.)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Google ile Kayıt Ol
-                    SquareTile(
-                      imagePath: 'assets/google.png',
-                      onTap: () async {
-                        User? user = await AuthService().signInWithGoogle();
-                        if (user != null) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const PostLoginPage()),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('Giriş başarısız veya iptal edildi.')),
-                          );
-                        }
-                      },
-                    ),
-                    // Diğer sosyal giriş butonları ekleyebilirsiniz
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Giriş Sayfasına Yönlendirme
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Zaten bir hesabınız var mı?"),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginPage()),
-                        );
-                      },
-                      child: Text(
-                        'Giriş Yap',
-                        style: TextStyle(
-                          color: Colors.blue[900],
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-              ],
+     
+      body: Stack(
+        children: [
+          // Arka Plan Resmi
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/background_register.jpg'), // Arka plan görseli
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
+          // İçerik
+          SafeArea(
+            child: Center(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: SingleChildScrollView( // ScrollView ekledik
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // İçeriğin ekranı doldurmasını engeller
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Logo
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/depomla.png',
+                          width: size.width * 0.4, // Ekran genişliğinin %40'ı kadar
+                          height: size.width * 0.4,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      // Kullanıcı Adı Girişi
+                      MyTextfield(
+                        controller: displayNameController,
+                        hintText: 'Kullanıcı Adı',
+                        obscureText: false,
+                        prefixIcon: Icons.person,
+                      ),
+                      const SizedBox(height: 15),
+                      // E-posta Girişi
+                      MyTextfield(
+                        controller: emailController,
+                        hintText: 'E-posta',
+                        obscureText: false,
+                        prefixIcon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 15),
+                      // Şifre Girişi
+                      MyTextfield(
+                        controller: passwordController,
+                        hintText: 'Şifre',
+                        obscureText: true,
+                        prefixIcon: Icons.lock,
+                      ),
+                      const SizedBox(height: 15),
+                      // Şifre Tekrar Girişi
+                      MyTextfield(
+                        controller: confirmPasswordController,
+                        hintText: 'Şifre Tekrar',
+                        obscureText: true,
+                        prefixIcon: Icons.lock_outline,
+                      ),
+                      const SizedBox(height: 25),
+                      // Kayıt Ol Butonu
+                      MyButton(
+                        onTap: signUpUser,
+                        text: 'Kayıt Ol',
+                        color: const Color(0xFF02aee7),
+                        textStyle: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19,
+                        ),
+                        // width: double.infinity, // Kaldırıldı
+                        // height: 50, // Kaldırıldı
+                        // borderRadius: 8, // Kaldırıldı
+                      ),
+                      const SizedBox(height: 25),
+                      // Veya
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              thickness: 1,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              "veya",
+                              style: TextStyle(color: Colors.black87),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              thickness: 1,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Sosyal Giriş Butonları
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SquareTile(
+                            imagePath: 'assets/google.png',
+                            onTap: () async {
+                              if (isProcessing) return; // İşlem devam ediyorsa iptal et
+                              setState(() {
+                                isProcessing = true;
+                              });
+
+                              User? user = await AuthService().signInWithGoogle();
+                              setState(() {
+                                isProcessing = false;
+                              });
+
+                              if (user != null) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const PostLoginPage()),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Giriş başarısız veya iptal edildi.')),
+                                );
+                              }
+                            },
+                          ),
+                          // Diğer sosyal giriş butonlarını eklemek isterseniz buraya ekleyebilirsiniz
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Giriş Sayfasına Yönlendirme
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("Zaten bir hesabınız var mı?"),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const LoginPage()),
+                              );
+                            },
+                            child: Text(
+                              'Giriş Yap',
+                              style: TextStyle(
+                                color: Colors.blue[900],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+          ),)    ],
+          ),
+        );
+      }
+    }

@@ -1,0 +1,23 @@
+{
+  'version': 0,
+  'use-external-names': 'false',
+  'case-sensitive': 'false',
+  'roots': [{
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/Google-Mobile-Ads-SDK/Google_Mobile_Ads_SDK.framework/Modules"
+    'contents': [{
+      'type': 'file',
+      'name': "module.modulemap",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/unextended-module.modulemap",
+    }]
+    },
+    {
+    'type': 'directory',
+    'name': "/Users/gorkem/Projeler/depomla/build/ios/Release-iphoneos/Google-Mobile-Ads-SDK/Google_Mobile_Ads_SDK.framework/Headers"
+    'contents': [{
+      'type': 'file',
+      'name': "Google_Mobile_Ads_SDK-Swift.h",
+      'external-contents': "/Users/gorkem/Projeler/depomla/ios/DerivedD/Runner/Build/Intermediates.noindex/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/unextended-interface-header.h",
+    }]
+    }]
+}
