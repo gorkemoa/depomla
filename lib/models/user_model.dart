@@ -1,4 +1,5 @@
 // lib/models/user_model.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
@@ -22,6 +23,7 @@ class UserModel {
     this.neighborhood = "Seçilmemiş",
   });
 
+  // Firestore için
   factory UserModel.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return UserModel(
@@ -33,6 +35,20 @@ class UserModel {
       city: data['city'] ?? 'Seçilmemiş',
       district: data['district'] ?? 'Seçilmemiş',
       neighborhood: data['neighborhood'] ?? 'Seçilmemiş',
+    );
+  }
+
+  // Realtime Database için
+  factory UserModel.fromMap(Map<dynamic, dynamic> map, String uid) {
+    return UserModel(
+      uid: uid,
+      email: map['email'] ?? '',
+      displayName: map['displayName'] ?? 'Bilinmeyen Kullanıcı',
+      photoURL: map['photoURL'],
+      lastSignIn: map['lastSignIn'],
+      city: map['city'] ?? 'Seçilmemiş',
+      district: map['district'] ?? 'Seçilmemiş',
+      neighborhood: map['neighborhood'] ?? 'Seçilmemiş',
     );
   }
 
@@ -66,6 +82,18 @@ class UserModel {
       city: city ?? this.city,
       district: district ?? this.district,
       neighborhood: neighborhood ?? this.neighborhood,
+    );
+  }
+ factory UserModel.fromRTDB(Map<dynamic, dynamic> map, String uid) {
+    return UserModel(
+      uid: uid,
+      email: map['email'] ?? '',
+      displayName: map['displayName'] ?? 'Bilinmeyen Kullanıcı',
+      photoURL: map['photoURL'] as String?,
+      lastSignIn: map['lastSignIn'],
+      city: map['city'] ?? 'Seçilmemiş',
+      district: map['district'] ?? 'Seçilmemiş',
+      neighborhood: map['neighborhood'] ?? 'Seçilmemiş',
     );
   }
 }

@@ -27,15 +27,14 @@ class _ListingsPageState extends State<ListingsPage> {
   DocumentSnapshot? lastDocument;
   bool isGrid = true;
 
-  String searchQuery = '';
+  String searchQuery =  '';
   double? minPrice;
   double? maxPrice;
   String? selectedItemType;
   String? selectedStorageType;
 
   static const int _limit = 20;
-  static const int _adFrequency = 2; // Reklam gösterim sıklığı artırıldı
-
+  static const int _adFrequency = 5; // Reklam gösterim sıklığı 
   @override
   void initState() {
     super.initState();
@@ -284,7 +283,7 @@ class _ListingsPageState extends State<ListingsPage> {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height:79), // Üstten daha küçük bir boşluk
+        const SizedBox(height:69), // Üstten daha küçük bir boşluk
         Container(
           height: 40,
           decoration: BoxDecoration(
@@ -329,7 +328,7 @@ class _ListingsPageState extends State<ListingsPage> {
               title: Text(
                 widget.category == ListingType.deposit
                     ? 'Depola İlanları'
-                    : 'Depolama İlanları',
+                    : 'Depotlama İlanları',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
                   fontSize: 18,

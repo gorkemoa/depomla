@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,8 +14,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:auto_size_text/auto_size_text.dart'; // AutoSizeText paketini ekliyoruz
 
+/// Yeni tasarımlı ListingDetailPage
 class ListingDetailPage extends StatefulWidget {
   final Listing listing;
   const ListingDetailPage({Key? key, required this.listing}) : super(key: key);
@@ -24,32 +26,30 @@ class ListingDetailPage extends StatefulWidget {
 
 class _ListingDetailPageState extends State<ListingDetailPage>
     with SingleTickerProviderStateMixin {
-  /// Firebase ve Servisler
+  // Firebase
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FavoriteService _favoriteService = FavoriteService();
 
-  /// Sayfa Verileri
+  // Kullanıcı bilgileri
   UserModel? listingUser;
+
+  // Durumlar
   bool isLoading = true;
   String? errorMessage;
-
-  /// Favori Durumları
   bool isFavorite = false;
   bool isFavoriteLoading = false;
   int _currentImageIndex = 0;
 
-  /// Animasyonlar
+  // Animasyon
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
 
-  /// Renkler ve Stiller
-  final Color kPrimaryColor = Color(0xFF2196F3); // Daha koyu mavi
-  final Color kSecondaryColor = const Color.fromARGB(255, 48, 101, 144); // Açık mavi
+  // Temel Renkler
+  final Color kPrimaryColor = const Color(0xFF2196F3); 
+  final Color kSecondaryColor = const Color.fromARGB(255, 48, 101, 144);
   final Color kCardColor = Colors.white;
-  final Color kIconColor = Colors.grey.shade700;
-
-  
+  final Color kIconColor = Colors.grey;
 
   @override
   void initState() {
@@ -57,12 +57,11 @@ class _ListingDetailPageState extends State<ListingDetailPage>
     _fetchListingDetails();
     _checkFavoriteStatus();
 
-    /// Temel animasyon
+    // Basit fade-in animasyonu
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 600),
     );
-
     _fadeInAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeIn,
@@ -79,49 +78,39 @@ class _ListingDetailPageState extends State<ListingDetailPage>
     super.dispose();
   }
 
-  //----------------------------------------------------------------------------
-  // 1) Veri Çekme ve Durum Yönetimi
-  //----------------------------------------------------------------------------
+  // --------------------- 1) Firestore / Favorite Check ------------------------
 
-  /// İlan sahibinin bilgilerini Firestore'dan çeker
   Future<void> _fetchListingDetails() async {
     try {
       final userDoc = await _firestore
           .collection('users')
           .doc(widget.listing.userId)
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get();
 
       if (!userDoc.exists) {
         setState(() {
-          errorMessage = 'İlan sahibinin bilgilerine ulaşılamadı.';
+          errorMessage = 'İlan sahibine ulaşılamadı.';
           isLoading = false;
         });
         return;
       }
-
       listingUser = UserModel.fromDocument(userDoc);
       setState(() => isLoading = false);
     } catch (e) {
       setState(() {
-        errorMessage = 'Kullanıcı bilgileri alınırken bir hata oluştu.';
+        errorMessage = 'Kullanıcı bilgisi çekilirken bir hata oluştu.';
         isLoading = false;
       });
-      debugPrint('İlan detayları çekilirken hata: $e');
     }
   }
 
-  /// İlanın favori olup olmadığını kontrol eder
   Future<void> _checkFavoriteStatus() async {
     final favoriteStatus = await _favoriteService.isFavorite(widget.listing.id);
-    setState(() {
-      isFavorite = favoriteStatus;
-    });
+    setState(() => isFavorite = favoriteStatus);
   }
 
-  /// Favori durumunu değiştirir
   Future<void> _toggleFavorite() async {
     setState(() => isFavoriteLoading = true);
-
     try {
       if (isFavorite) {
         await _favoriteService.removeFavorite(widget.listing.id);
@@ -130,46 +119,40 @@ class _ListingDetailPageState extends State<ListingDetailPage>
       }
       setState(() => isFavorite = !isFavorite);
     } catch (e) {
-      debugPrint('Favori işlemi sırasında hata: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Favori işlemi sırasında bir hata oluştu: $e')),
+        SnackBar(content: Text('Favori işlemi hatası: $e')),
       );
     } finally {
       setState(() => isFavoriteLoading = false);
     }
   }
 
-  //----------------------------------------------------------------------------
-  // 2) Mesajlaşma Akışı
-  //----------------------------------------------------------------------------
+  // ------------------------- 2) Chat Başlatma -------------------------------
 
-  /// Kullanıcıyla mesajlaşma başlatır
   Future<void> _startChat() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       final shouldLogin = await showDialog<bool>(
             context: context,
-            builder: (context) => _buildLoginAlertDialog(),
+            builder: (_) => _buildLoginAlertDialog(),
           ) ??
           false;
-
       if (shouldLogin) {
+        // Login'e gönder
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
+          MaterialPageRoute(builder: (_) => const LoginPage()),
         );
       }
       return;
     }
-
     if (listingUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('İlan sahibi bulunamadı.')),
       );
       return;
     }
-
-    // Kendi ilanınıza mesaj göndermeyi engeller
+    // Kendi ilanınıza mesaj atamazsınız
     if (currentUser.uid == listingUser!.uid) return;
 
     final chatId = '${currentUser.uid}_${listingUser!.uid}_${widget.listing.id}';
@@ -189,170 +172,103 @@ class _ListingDetailPageState extends State<ListingDetailPage>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChatPage(chatId: chatId, listing: widget.listing),
+        builder: (_) => ChatPage(chatId: chatId, listing: widget.listing),
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 3) Ana Widget Yapısı
-  //----------------------------------------------------------------------------
+  // --------------------------- 3) Scaffold / UI -----------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        /// Profesyonel görünüm için gradient arka plan
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, kPrimaryColor.withOpacity(0.05)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeInAnimation,
-            child: isLoading
-                ? _buildLoadingIndicator()
-                : errorMessage != null
-                    ? _buildErrorState()
-                    : _buildContent(),
-          ),
-        ),
+      body: FadeTransition(
+        opacity: _fadeInAnimation,
+        child: isLoading
+            ? _buildLoadingIndicator()
+            : errorMessage != null
+                ? _buildErrorState()
+                : _buildSliverView(context),
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 4) Yükleme ve Hata Durumları
-  //----------------------------------------------------------------------------
+  /// Modern SliverAppBar / SliverList yapısı
+  Widget _buildSliverView(BuildContext context) {
+    final bool isOwnListing = 
+        _auth.currentUser?.uid == listingUser?.uid;
 
-  /// Yükleniyor göstergesi
-  Widget _buildLoadingIndicator() {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  /// Hata mesajı göstergesi
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
-          errorMessage!,
-          style: GoogleFonts.poppins(color: Colors.red, fontSize: 18),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  //----------------------------------------------------------------------------
-  // 5) Ana İçerik
-  //----------------------------------------------------------------------------
-
-  /// Ana içerik yapısı
-  Widget _buildContent() {
-    final currentUser = _auth.currentUser;
-    final bool isOwnListing =
-        currentUser != null && currentUser.uid == listingUser?.uid;
-
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImageCarousel(),
-                const SizedBox(height: 16),
-                _buildTitleAndPrice(),
-                const SizedBox(height: 8),
-                _buildLocationAndDate(),
-                const SizedBox(height: 16),
-                if (!isOwnListing) _buildContactButton(),
-                const SizedBox(height: 24),
-                _buildDescriptionSection(),
-                const SizedBox(height: 8),
-                _buildEventDates(), // Başlangıç ve Bitiş Tarihleri
-                const SizedBox(height: 24),
-                _buildDetailSection(),
-                const SizedBox(height: 24),
-                if (listingUser != null) _buildUserInfo(),
-                const SizedBox(height: 24),
-              ],
-            ),
+    return CustomScrollView(
+      slivers: [
+        // SliverAppBar (resim galerisi arkaplanda kayıyor)
+        SliverAppBar(
+          expandedHeight: 320.0,
+          pinned: true,
+          floating: false,
+          backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.of(context).pop(),
           ),
+          actions: [
+            isFavoriteLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(14.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.black,
+                    ),
+                    onPressed: _toggleFavorite,
+                  ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: _buildCarouselHeader(),
+          ),
+        ),
+
+        // SliverList: Detay içerik
+        SliverList(
+          delegate: SliverChildListDelegate([
+            const SizedBox(height: 16),
+            _buildTitleAndPrice(),
+            const SizedBox(height: 8),
+            _buildLocationAndDate(),
+            const SizedBox(height: 16),
+            if (!isOwnListing) _buildContactButton(),
+            const SizedBox(height: 24),
+            _buildDescriptionSection(),
+            _buildEventDates(),
+            const SizedBox(height: 16),
+            _buildDetailSection(),
+            const SizedBox(height: 16),
+            if (listingUser != null) _buildUserInfo(),
+            const SizedBox(height: 40),
+          ]),
         ),
       ],
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 5a) Header - Geri Butonu ve Favori Butonu
-  //----------------------------------------------------------------------------
+  // --------------------------- 4) Parça Widgetlar ---------------------------
 
-  /// Header kısmını oluşturur (Geri butonu ve Favori butonu)
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          /// Geri butonu
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
-            ),
-          ),
-
-          /// Favori butonu
-          GestureDetector(
-            onTap: _toggleFavorite,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(8),
-              child: isFavoriteLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.black,
-                      size: 24,
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  //----------------------------------------------------------------------------
-  // 6) Görsel Galeri (Carousel)
-  //----------------------------------------------------------------------------
-
-  /// Görsel galeriyi oluşturur
-  Widget _buildImageCarousel() {
-    if (widget.listing.imageUrl.isEmpty) {
+  /// SliverAppBar arkasında dönen Carousel + Dot Indicator
+  Widget _buildCarouselHeader() {
+    final images = widget.listing.imageUrl;
+    if (images.isEmpty) {
       return Container(
-        height: 300,
         color: Colors.grey.shade200,
         child: const Center(
-          child: Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
+          child: Icon(
+            Icons.image_not_supported, 
+            size: 80, 
+            color: Colors.grey),
         ),
       );
     }
@@ -361,15 +277,15 @@ class _ListingDetailPageState extends State<ListingDetailPage>
       alignment: Alignment.bottomCenter,
       children: [
         CarouselSlider.builder(
-          itemCount: widget.listing.imageUrl.length,
+          itemCount: images.length,
           itemBuilder: (context, index, _) {
-            final imageUrl = widget.listing.imageUrl[index];
+            final imageUrl = images[index];
             return GestureDetector(
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => FullScreenImagePage(
-                    imageUrls: widget.listing.imageUrl,
+                    imageUrls: images,
                     initialIndex: index,
                   ),
                 ),
@@ -378,9 +294,8 @@ class _ListingDetailPageState extends State<ListingDetailPage>
                 tag: 'listingImage_${widget.listing.id}_$index',
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
-                  width: double.infinity,
-                  height: 300,
                   fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
                   placeholder: (context, url) => Container(
                     color: Colors.grey.shade300,
                     child: const Center(child: CircularProgressIndicator()),
@@ -398,87 +313,107 @@ class _ListingDetailPageState extends State<ListingDetailPage>
             );
           },
           options: CarouselOptions(
-            height: 300,
+            height: double.infinity,
             viewportFraction: 1.0,
             enlargeCenterPage: false,
-            enableInfiniteScroll: false,
             onPageChanged: (index, reason) {
               setState(() => _currentImageIndex = index);
             },
           ),
         ),
-        Positioned(
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 4,
-              horizontal: 10,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: widget.listing.imageUrl.asMap().entries.map((entry) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: _currentImageIndex == entry.key ? 12.0 : 8.0,
-                  height: _currentImageIndex == entry.key ? 12.0 : 8.0,
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 8.0,
-                    horizontal: 4.0,
-                  ),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentImageIndex == entry.key
-                        ? Colors.white
-                        : Colors.white54,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
+        _buildDotIndicator(images.length),
       ],
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 7) Başlık ve Fiyat
-  //----------------------------------------------------------------------------
+  /// Dot Indicator
+  Widget _buildDotIndicator(int length) {
+    if (length < 2) return const SizedBox.shrink();
 
-  /// Başlık ve fiyat bilgisini gösterir
+    return Positioned(
+      bottom: 12,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(length, (index) {
+            final bool isActive = index == _currentImageIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: isActive ? 12 : 8,
+              height: isActive ? 12 : 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isActive ? Colors.white : Colors.white54,
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  /// Yükleniyor göstergesi
+  Widget _buildLoadingIndicator() {
+    return Container(
+      color: Colors.white,
+      child: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  /// Hata Durumu
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Text(
+          errorMessage ?? 'Bir hata oluştu.',
+          style: GoogleFonts.poppins(
+            color: Colors.redAccent,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  /// Başlık + Fiyat
   Widget _buildTitleAndPrice() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          /// Başlık
           Expanded(
             child: AutoSizeText(
               widget.listing.title,
               style: GoogleFonts.poppins(
                 fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                fontWeight: FontWeight.w600,
               ),
-              maxLines: 2, // Maksimum iki satır
-              overflow: TextOverflow.ellipsis, // Gerekirse '...' ekle
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          /// Fiyat
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: kPrimaryColor.withOpacity(0.2),
+              color: kPrimaryColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               '${widget.listing.price.toStringAsFixed(2)} ₺',
               style: GoogleFonts.poppins(
                 color: kPrimaryColor,
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -488,268 +423,269 @@ class _ListingDetailPageState extends State<ListingDetailPage>
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 8) Konum ve Tarih
-  //----------------------------------------------------------------------------
-
-  /// Konum ve ilan tarihini gösterir
+  /// Konum + Oluşturulma Tarihi
   Widget _buildLocationAndDate() {
-    final locationText = _getLocationText();
-    final formattedDate =
-        DateFormat('dd.MM.yyyy').format(widget.listing.createdAt.toDate());
+    final dateStr = DateFormat('dd.MM.yyyy')
+        .format(widget.listing.createdAt.toDate());
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
       child: Row(
         children: [
-          /// Konum İkonu ve Metni
-          const Icon(Icons.location_on_outlined, color: Colors.grey, size: 20),
+          const Icon(Icons.location_on_outlined, color: Colors.grey),
           const SizedBox(width: 4),
           Expanded(
-            child: AutoSizeText(
-              locationText,
-              style: GoogleFonts.poppins(fontSize: 15, color: Colors.black87),
-              maxLines: 2,
+            child: Text(
+              _getFullLocation(),
+              style: GoogleFonts.poppins(
+                fontSize:15,
+                color: const Color.fromARGB(221, 14, 82, 170),
+              ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 4,
             ),
           ),
-          /// Tarih İkonu ve Metni
-          const SizedBox(width: 2),
-          const Icon(Icons.access_time_outlined, color: Colors.grey, size: 20),
+          const SizedBox(width: 8),
+          const Icon(Icons.access_time_outlined, color: Colors.grey),
           const SizedBox(width: 4),
           Text(
-            formattedDate,
-            style: GoogleFonts.poppins(fontSize: 15, color: Colors.black87),
+            dateStr,
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
           ),
         ],
       ),
     );
   }
 
-  /// Konum bilgisini birleştirir
-  String _getLocationText() {
-    if (widget.listing.neighborhood != null &&
-        widget.listing.district != null &&
-        widget.listing.city != null) {
-      return '${widget.listing.neighborhood}, '
-          '${widget.listing.district}, '
-          '${widget.listing.city}';
+  String _getFullLocation() {
+    final n = widget.listing.neighborhood;
+    final d = widget.listing.district;
+    final c = widget.listing.city;
+    if (n != null && d != null && c != null) {
+      return '$n, $d, $c';
     }
-    return 'Konum belirtilmemiş';
+    return 'Konum Belirtilmemiş';
   }
 
-  //----------------------------------------------------------------------------
-  // 9) İletişime Geç Butonu
-  //----------------------------------------------------------------------------
-
-  /// İlan sahibiyle iletişime geçmek için buton
+  /// İlan sahibiyle iletişime geç butonu
   Widget _buildContactButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kPrimaryColor,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-        ),
-        icon: const Icon(Icons.chat, color: Colors.white),
+        icon: const Icon(Icons.chat),
         label: Text(
           'İlan Sahibiyle İletişim',
-          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 16, 
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: kPrimaryColor,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         onPressed: _startChat,
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 10) Açıklama Bölümü
-  //----------------------------------------------------------------------------
-
-  /// İlan açıklamasını gösterir
+  /// Açıklama alanı
   Widget _buildDescriptionSection() {
-    final description = widget.listing.description.isNotEmpty
+    final desc = widget.listing.description.isNotEmpty
         ? widget.listing.description
-        : 'Bu ilan için açıklama girilmemiş.';
-
-    return _buildCardWrapper(
+        : 'Açıklama girilmemiş.';
+    return _cardWrapper(
       title: 'Açıklama',
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: AutoSizeText(
-          description,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            color: Colors.grey[800],
-            height: 1.5,
-          ),
-          maxLines: 10, // Maksimum satır sayısı
-          overflow: TextOverflow.ellipsis,
+      child: Text(
+        desc,
+        style: GoogleFonts.poppins(
+          fontSize: 14, 
+          height: 1.5, 
+          color: Colors.grey[800]
         ),
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 5b) İlan Başlangıç ve Bitiş Tarihleri
-  //----------------------------------------------------------------------------
-
-  /// İlan başlangıç ve bitiş tarihlerini gösterir
+  /// Başlangıç & Bitiş tarihleri
   Widget _buildEventDates() {
-    final DateTime? startDate = widget.listing.startDate;
-    final DateTime? endDate = widget.listing.endDate;
+    final start = widget.listing.startDate;
+    final end = widget.listing.endDate;
 
-    String startDateText = 'Başlangıç Tarihi: Belirtilmemiş';
-    String endDateText = 'Bitiş Tarihi: Belirtilmemiş';
+    final startText = start != null
+        ? 'Başlangıç: ${DateFormat('dd.MM.yyyy').format(start)}'
+        : 'Başlangıç: Belirtilmemiş';
 
-    if (startDate != null) {
-      startDateText = 'Başlangıç Tarihi: ${DateFormat('dd.MM.yyyy').format(startDate)}';
-    }
+    final endText = end != null
+        ? 'Bitiş: ${DateFormat('dd.MM.yyyy').format(end)}'
+        : 'Bitiş: Belirtilmemiş';
 
-    if (endDate != null) {
-      endDateText = 'Bitiş Tarihi: ${DateFormat('dd.MM.yyyy').format(endDate)}';
-    }
-
-    return _buildCardWrapper(
+    return _cardWrapper(
       title: 'Etkinlik Tarihleri',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            startDateText,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            endDateText,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              color: Colors.black87,
-            ),
-          ),
+          Text(startText, style: GoogleFonts.poppins(fontSize: 14)),
+          const SizedBox(height: 6),
+          Text(endText, style: GoogleFonts.poppins(fontSize: 14)),
         ],
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 11) Detaylar Bölümü (İyileştirilmiş)
-  //----------------------------------------------------------------------------
-
-  /// İlan detaylarını gösterir ve gelişmiş detaylar ekler
+  /// İlan detayları
   Widget _buildDetailSection() {
-    return _buildCardWrapper(
+    return _cardWrapper(
       title: 'İlan Detayları',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Alan
-          _buildDetailRowWithIcon(Icons.square_foot, 'Alan', widget.listing.size != null ? '${widget.listing.size} m²' : 'Belirtilmemiş'),
+          // Alan (Sadece Storage ise)
+          if (widget.listing.listingType == ListingType.storage)
+            _buildDetailRowWithIcon(
+              Icons.square_foot,
+              'Alan',
+              widget.listing.size != null 
+                  ? '${widget.listing.size} m²' 
+                  : 'Belirtilmemiş',
+            ),
           const SizedBox(height: 8),
 
-          /// Depolama Türü
-          _buildDetailRowWithIcon(Icons.storage, 'Depolama Türü', widget.listing.storageType ?? 'Belirtilmemiş'),
-          const SizedBox(height: 8),
+          // Storage
+          if (widget.listing.listingType == ListingType.storage) ...[
+            _buildStorageDetails(),
+          ],
 
-          /// Özellikler
-          _buildFeatureChips(
-            title: 'Özellikler',
-            features: widget.listing.features.entries
-                .where((e) => e.value)
-                .map((e) => e.key)
-                .toList(),
-            chipColor: kPrimaryColor,
-          ),
-          const SizedBox(height: 16),
+          // Deposit
+          if (widget.listing.listingType == ListingType.deposit) ...[
+            _buildDepositDetails(),
+          ],
 
-          /// Eşya Türü
-          _buildDetailRowWithIcon(Icons.category, 'Eşya Türü', widget.listing.itemType ?? 'Belirtilmemiş'),
-          const SizedBox(height: 8),
-
-          /// Ağırlık
-          _buildDetailRowWithIcon(Icons.fitness_center, 'Ağırlık', widget.listing.itemWeight != null ? '${widget.listing.itemWeight} kg' : 'Belirtilmemiş'),
-          const SizedBox(height: 8),
-
-          /// Boyutlar
-          _buildDetailRowWithIcon(Icons.straighten, 'Boyutlar', _getDimensionsText()),
-          const SizedBox(height: 8),
-
-          /// Sıcaklık Kontrolü
-          _buildDetailRowWithIcon(Icons.thermostat, 'Sıcaklık Kontrolü', widget.listing.requiresTemperatureControl == true ? 'Gerekli' : 'Gerekli Değil'),
-          const SizedBox(height: 8),
-
-          /// Kuru Ortam
-          _buildDetailRowWithIcon(Icons.water_drop, 'Kuru Ortam', widget.listing.requiresDryEnvironment == true ? 'Gerekli' : 'Gerekli Değil'),
-          const SizedBox(height: 16),
-
-          /// Sigorta
-          _buildDetailRowWithIcon(Icons.security, 'Sigorta', widget.listing.insuranceRequired == true ? 'Gerekli' : 'Gerekli Değil'),
-          const SizedBox(height: 8),
-
-          /// Yasaklı Şartlar
-          _buildFeatureChips(
-            title: 'Yasaklı Şartlar',
-            features: widget.listing.prohibitedConditions ?? [],
-            chipColor: Colors.redAccent,
-          ),
-          const SizedBox(height: 16),
-
-          /// Teslimat
-          _buildDetailRowWithIcon(Icons.delivery_dining, 'Teslimat', widget.listing.deliveryDetails?.isNotEmpty == true ? widget.listing.deliveryDetails! : 'Belirtilmemiş'),
-          const SizedBox(height: 8),
-
-          /// Ek Notlar
-          _buildDetailRowWithIcon(Icons.note, 'Ek Notlar', widget.listing.additionalNotes?.isNotEmpty == true ? widget.listing.additionalNotes! : 'Belirtilmemiş'),
-          const SizedBox(height: 16),
-
-          /// Tercih Edilen Özellikler
-          _buildFeatureChips(
-            title: 'Tercih Edilen Özellikler',
-            features: widget.listing.preferredFeatures ?? [],
-            chipColor: kSecondaryColor,
-          ),
-          const SizedBox(height: 16),
-
-          // Ekstra Gelişmiş Detaylar
+          // Ek Bilgiler
           _buildAdditionalInfoSection(),
         ],
       ),
     );
   }
 
-  /// Ekstra gelişmiş detayları ekler
- Widget _buildAdditionalInfoSection() {
-        return _buildCardWrapper(
-          title: 'Ek Bilgiler',
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              getAdditionalInfoText(),
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ),
-        );
-      }
+  Widget _buildStorageDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRowWithIcon(
+          Icons.storage,
+          'Depolama Türü',
+          widget.listing.storageType ?? 'Belirtilmemiş',
+        ),
+        const SizedBox(height: 8),
+        _buildFeatureChips(
+          title: 'Özellikler',
+          features: widget.listing.features.entries
+              .where((e) => e.value)
+              .map((e) => e.key)
+              .toList(),
+          chipColor: kPrimaryColor,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 
-      /// İlan türüne bağlı olarak ek bilgi metnini belirler
-      String getAdditionalInfoText() {
-        if (widget.listing.listingType == ListingType.deposit) {
-          return 'İlan sahibi, eşyaların güvenli bir şekilde depolanmasını sağlamak için gerekli tüm önlemleri almıştır. Herhangi bir hasar durumunda sigorta kapsamında olup olmadığını lütfen ilan sahibine danışınız.';
-        } else if (widget.listing.listingType == ListingType.storage) {
-          return 'Depolayan kişi, eşyalarınızı güvenli ve özenli bir şekilde saklamak için gerekli tüm önlemleri almıştır. Herhangi bir sorun yaşamanız durumunda depolayan kişi ile iletişime geçebilirsiniz.';
-        } else {
-          return 'İlan detayları için ek bilgi bulunmamaktadır.';
-        }
-      }
+  Widget _buildDepositDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRowWithIcon(
+          Icons.category,
+          'Eşya Türü',
+          widget.listing.itemType ?? 'Belirtilmemiş',
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRowWithIcon(
+          Icons.fitness_center,
+          'Ağırlık',
+          widget.listing.itemWeight != null 
+              ? '${widget.listing.itemWeight} kg'
+              : 'Belirtilmemiş',
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRowWithIcon(
+          Icons.straighten,
+          'Boyutlar',
+          _getDimensionsText(),
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRowWithIcon(
+          Icons.thermostat,
+          'Sıcaklık Kontrolü',
+          widget.listing.requiresTemperatureControl == true
+              ? 'Gerekli'
+              : 'Gerekli Değil',
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRowWithIcon(
+          Icons.water_drop,
+          'Kuru Ortam',
+          widget.listing.requiresDryEnvironment == true 
+              ? 'Gerekli'
+              : 'Gerekli Değil',
+        ),
+        const SizedBox(height: 16),
+        _buildDetailRowWithIcon(
+          Icons.security,
+          'Sigorta',
+          widget.listing.insuranceRequired == true
+              ? 'Gerekli'
+              : 'Gerekli Değil',
+        ),
+        const SizedBox(height: 8),
+        _buildFeatureChips(
+          title: 'Yasaklı Şartlar',
+          features: widget.listing.prohibitedConditions ?? [],
+          chipColor: Colors.redAccent,
+        ),
+        const SizedBox(height: 16),
+        _buildDetailRowWithIcon(
+          Icons.delivery_dining,
+          'Teslimat',
+          widget.listing.deliveryDetails?.isNotEmpty == true
+              ? widget.listing.deliveryDetails!
+              : 'Belirtilmemiş',
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRowWithIcon(
+          Icons.note,
+          'Ek Notlar',
+          widget.listing.additionalNotes?.isNotEmpty == true
+              ? widget.listing.additionalNotes!
+              : 'Belirtilmemiş',
+        ),
+        const SizedBox(height: 16),
+        _buildFeatureChips(
+          title: 'Tercih Edilen Özellikler',
+          features: widget.listing.preferredFeatures ?? [],
+          chipColor: kSecondaryColor,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 
-  /// Detay satırını ikon ile oluşturur
+  String _getDimensionsText() {
+    final dims = widget.listing.itemDimensions;
+    if (dims != null) {
+      final l = dims['length'] ?? '–';
+      final w = dims['width'] ?? '–';
+      final h = dims['height'] ?? '–';
+      return 'Uzunluk: $l m, Genişlik: $w m, Yükseklik: $h m';
+    }
+    return 'Belirtilmemiş';
+  }
+
+  /// Ortak satır stili
   Widget _buildDetailRowWithIcon(IconData icon, String label, String text) {
     return Row(
       children: [
@@ -758,30 +694,17 @@ class _ListingDetailPageState extends State<ListingDetailPage>
         Expanded(
           child: Text(
             '$label: $text',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.black87,
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// Boyutlar metnini oluşturur
-  String _getDimensionsText() {
-    final dimensions = widget.listing.itemDimensions;
-    if (dimensions != null) {
-      final length = dimensions['length'] ?? '–';
-      final width = dimensions['width'] ?? '–';
-      final height = dimensions['height'] ?? '–';
-      return 'Uzunluk: $length m, Genişlik: $width m, Yükseklik: $height m';
-    }
-    return 'Belirtilmemiş';
-  }
-
-  //----------------------------------------------------------------------------
-  // 12) Bilgi Satırları ve Chip'ler
-  //----------------------------------------------------------------------------
-
-  /// Chip'leri oluşturur
+  /// Chip set
   Widget _buildFeatureChips({
     required String title,
     required List<String> features,
@@ -790,69 +713,115 @@ class _ListingDetailPageState extends State<ListingDetailPage>
     if (features.isEmpty) {
       return Row(
         children: [
-          Icon(Icons.block, color: kIconColor, size: 18),
+          Icon(Icons.block, color: Colors.grey.shade600, size: 18),
           const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              '$title: Yok',
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-            ),
+          Text(
+            '$title: Yok',
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[800]),
           ),
         ],
       );
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style:
-              GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 14, 
+            fontWeight: FontWeight.w600
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
           spacing: 8,
           runSpacing: 6,
-          children: features
-              .map(
-                (f) => Chip(
-                  label: Text(f),
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
-                  backgroundColor: chipColor.withOpacity(0.1),
-                  side: BorderSide(color: chipColor),
-                ),
-              )
-              .toList(),
+          children: features.map((f) {
+            return Chip(
+              label: Text(f, style: GoogleFonts.poppins(fontSize: 13)),
+              backgroundColor: chipColor.withOpacity(0.1),
+              side: BorderSide(color: chipColor),
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 13) Kullanıcı Bilgileri
-  //----------------------------------------------------------------------------
+  /// Ek Bilgi
+  Widget _buildAdditionalInfoSection() {
+    return _cardWrapper(
+      title: 'Ek Bilgiler',
+      child: Text(
+        getAdditionalInfoText(),
+        style: GoogleFonts.poppins(fontSize: 14, height: 1.5),
+      ),
+    );
+  }
 
-  /// İlan sahibinin bilgilerini gösterir
+  String getAdditionalInfoText() {
+    if (widget.listing.listingType == ListingType.deposit) {
+      return 'Eşyalarınız için gerekli tüm önlemler alınmış olup, sigorta konusunu ilan sahibiyle görüşebilirsiniz.';
+    } else if (widget.listing.listingType == ListingType.storage) {
+      return 'Depolayan kişi, eşyalarınızı güvenli ve özenli şekilde saklamak için gerekli tüm önlemleri almaktadır.';
+    }
+    return 'Ek bilgi bulunmamaktadır.';
+  }
+
+  Widget _cardWrapper({
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            offset: const Offset(0, 3),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          child,
+        ],
+      ),
+    );
+  }
+
+  /// İlan sahibi bilgisi
   Widget _buildUserInfo() {
-    return _buildCardWrapper(
+    return _cardWrapper(
       title: 'İlan Sahibi',
       child: GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => UserProfilePage(user: listingUser!),
-          ),
-        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => UserProfilePage(user: listingUser!),
+            ),
+          );
+        },
         child: Row(
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundImage: (listingUser!.photoURL != null &&
-                      listingUser!.photoURL!.isNotEmpty)
+              backgroundImage: (listingUser!.photoURL?.isNotEmpty ?? false)
                   ? NetworkImage(listingUser!.photoURL!)
                   : const AssetImage('assets/images/default_avatar.png')
                       as ImageProvider,
@@ -862,41 +831,35 @@ class _ListingDetailPageState extends State<ListingDetailPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Kullanıcı adı
                   AutoSizeText(
-                    listingUser!.displayName.isNotEmpty
-                        ? listingUser!.displayName
-                        : 'Kullanıcı',
+                    listingUser!.displayName.isEmpty 
+                        ? 'Kullanıcı' 
+                        : listingUser!.displayName,
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      fontSize: 16, 
+                      fontWeight: FontWeight.w600
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  /// Kullanıcı puanı ve yorum sayısı
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.amber.shade600, size: 16),
+                      Icon(Icons.star, color: Colors.amber.shade700, size: 16),
                       const SizedBox(width: 4),
-                      Text(
-                        '4.5⭐️',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
+                      Text('4.5',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          )),
                       const SizedBox(width: 16),
-                      Icon(Icons.chat_bubble,
-                          color: kSecondaryColor, size: 16),
+                      const Icon(Icons.chat_bubble, color: Colors.blueAccent, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        '16+💬',
+                        '16+ Yorum',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.grey.shade600,
+                          color: Colors.grey[700],
                         ),
                       ),
                     ],
@@ -904,27 +867,26 @@ class _ListingDetailPageState extends State<ListingDetailPage>
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                color: Colors.grey, size: 16),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
           ],
         ),
       ),
     );
   }
 
-  //----------------------------------------------------------------------------
-  // 14) Giriş İçin AlertDialog
-  //----------------------------------------------------------------------------
-
-  /// Giriş yapma gerektiğini belirten AlertDialog
+  /// Giriş Yap AlertDialog
   AlertDialog _buildLoginAlertDialog() {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         'Giriş Yapmanız Gerekli',
         style: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
           fontSize: 20,
+          fontWeight: FontWeight.bold,
         ),
         textAlign: TextAlign.center,
       ),
@@ -932,16 +894,15 @@ class _ListingDetailPageState extends State<ListingDetailPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Mesaj gönderebilmek için önce hesabınıza giriş yapmalısınız. '
-            'Giriş yapmak ister misiniz?',
-            style: GoogleFonts.poppins(fontSize: 16),
+            'Mesaj göndermek için giriş yapmalısınız.\nGiriş yapmak ister misiniz?',
+            style: GoogleFonts.poppins(fontSize: 15),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           Icon(Icons.login, size: 50, color: kPrimaryColor),
         ],
       ),
-      actionsAlignment: MainAxisAlignment.spaceAround,
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
@@ -964,49 +925,6 @@ class _ListingDetailPageState extends State<ListingDetailPage>
           ),
         ),
       ],
-    );
-  }
-
-  //----------------------------------------------------------------------------
-  // 15) Kart Wrapper
-  //----------------------------------------------------------------------------
-
-  /// Kart benzeri bölümler için genel yapı
-  Widget _buildCardWrapper({
-    required String title,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: kCardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade300,
-            offset: const Offset(0, 4),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Kart başlığı
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 6),
-          child,
-        ],
-      ),
     );
   }
 }

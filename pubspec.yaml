@@ -17,11 +17,12 @@ dependencies:
 
   # Firebase packages
   firebase_core: ^3.8.1
+  firebase_database: ^11.2.0
   cloud_firestore: ^5.5.1
   firebase_storage: ^12.3.7
-  firebase_auth: 
+  firebase_auth: ^5.3.4
   firebase_messaging: ^15.1.6
-  google_mobile_ads: ^5.2.0
+  google_mobile_ads: 
 
   # Diğer paketler
   image_picker: ^1.1.2
@@ -34,10 +35,12 @@ dependencies:
   google_fonts: ^6.2.1
   carousel_slider: ^5.0.0
   cached_network_image: ^3.2.3
-  auto_size_text:
+  auto_size_text: ^3.0.0
   # Lints for better code practices
   flutter_lints: ^5.0.0
   flutter_local_notifications: ^18.0.1
+  flutter_staggered_grid_view: ^0.7.0
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -73,4 +76,4 @@ flutter:
     - assets/depomlaloading.gif
     - assets/background.jpg
     - assets/background_register.jpg
-  
+    # lib/pages/comment_page/chat_page.dart # Yorum satırı için # kullanın

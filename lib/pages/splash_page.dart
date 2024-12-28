@@ -45,7 +45,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _fadeController.forward();
     _scaleController.forward();
 
-    // 3 saniye sonra ana sayfaya yönlendir
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacementNamed(context, '/home');
     });

@@ -297,6 +297,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.18.2"
+  firebase_database:
+    dependency: "direct main"
+    description:
+      name: firebase_database
+      sha256: "473c25413683c1c4c8d80918efdc1a232722624bad3b6edfed9fae52b8d927c1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.2.0"
+  firebase_database_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_database_platform_interface
+      sha256: e83241bcbe4e1bcfcbfd12d0e2ef7706af009663d291efa96bc965adb9ded25d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5+47"
+  firebase_database_web:
+    dependency: transitive
+    description:
+      name: firebase_database_web
+      sha256: "9f4048132a3645f1ad528c4839a7c15ad3ff922ee7761821ea9526ffd52735b7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.6+5"
   firebase_messaging:
     dependency: "direct main"
     description:
@@ -422,6 +446,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.24"
+  flutter_staggered_grid_view:
+    dependency: "direct main"
+    description:
+      name: flutter_staggered_grid_view
+      sha256: "19e7abb550c96fbfeb546b23f3ff356ee7c59a019a651f8f102a4ba9b7349395"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -513,7 +545,7 @@ packages:
     source: hosted
     version: "0.15.5"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010

@@ -39,6 +39,8 @@ target 'Runner' do
   pod 'Firebase/Auth'
   pod 'Firebase/Firestore'
   pod 'GoogleSignIn'
+  pod 'Firebase/Database'
+
 
   target 'RunnerTests' do
     inherit! :search_paths

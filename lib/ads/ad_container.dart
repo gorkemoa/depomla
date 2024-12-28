@@ -23,9 +23,9 @@ class _AdContainerState extends State<AdContainer> {
 
   void _loadBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: GlobalAdsService().bannerAdUnitId,
+      adUnitId: GlobalAdsService().bannerAdUnitId, // Doğru ve benzersiz Ad Unit ID kullanın
       size: AdSize.banner, // İhtiyacınıza göre boyutu seçin
-      request: AdRequest(),
+      request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
           setState(() {
@@ -43,7 +43,7 @@ class _AdContainerState extends State<AdContainer> {
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
+    _bannerAd?.dispose(); // Widget yok edilirken reklamı temizleyin
     super.dispose();
   }
 
@@ -51,12 +51,13 @@ class _AdContainerState extends State<AdContainer> {
   Widget build(BuildContext context) {
     if (_isAdLoaded && _bannerAd != null) {
       return Container(
+        alignment: Alignment.center, // Reklamın ortalanmasını sağlar
         width: _bannerAd!.size.width.toDouble(),
         height: _bannerAd!.size.height.toDouble(),
         child: AdWidget(ad: _bannerAd!),
       );
     } else {
-      return const SizedBox.shrink();
+      return const SizedBox.shrink(); // Reklam yüklenmemişse boş bırak
     }
   }
 }

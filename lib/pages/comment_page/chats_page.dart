@@ -104,8 +104,7 @@ class _ChatsPageState extends State<ChatsPage>
 
         final chatDocs = chatSnapshot.data!.docs;
 
-        return ListView.separated(
-          separatorBuilder: (context, index) => const Divider(height: 1),
+        return ListView.builder(
           itemCount: chatDocs.length,
           itemBuilder: (context, index) {
             final chatData = chatDocs[index].data();
@@ -120,7 +119,8 @@ class _ChatsPageState extends State<ChatsPage>
                   .limit(1)
                   .snapshots(),
               builder: (context, messageSnapshot) {
-                if (messageSnapshot.connectionState == ConnectionState.waiting) {
+                if (messageSnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return const SizedBox.shrink();
                 }
 
@@ -181,7 +181,10 @@ class _ChatsPageState extends State<ChatsPage>
     if (participants.length < 2) {
       return const SizedBox.shrink(); // Hiçbir şey göstermiyor
     }
-    final otherUserId = participants.firstWhere((id) => id != currentUser!.uid, orElse: () => '');
+    final otherUserId = participants.firstWhere(
+      (id) => id != currentUser!.uid,
+      orElse: () => '',
+    );
 
     if (otherUserId.isEmpty) {
       return const SizedBox.shrink(); // Hiçbir şey göstermiyor
@@ -323,20 +326,17 @@ class _ChatsPageState extends State<ChatsPage>
                     // Sohbeti önemli olarak işaretle (kategori olarak 'important' yapıyoruz)
                     await _firestore.collection('chats').doc(chatId).update({
                       'category': 'important',
-                      'lastMessageTime': FieldValue
-                          .serverTimestamp(), // lastMessageTime'ı da güncelliyoruz
+                      'lastMessageTime': FieldValue.serverTimestamp(), // lastMessageTime'ı da güncelliyoruz
                     });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Sohbet önemli olarak işaretlendi.')),
+                      const SnackBar(content: Text('Sohbet önemli olarak işaretlendi.')),
                     );
                   } catch (e) {
                     print('Sohbet önemli olarak işaretlenirken hata: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text(
-                              'Sohbet önemli olarak işaretlenirken bir hata oluştu.')),
+                          content: Text('Sohbet önemli olarak işaretlenirken bir hata oluştu.')),
                     );
                   }
                 },

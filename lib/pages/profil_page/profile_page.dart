@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:depomla/pages/auth_page/settings_page.dart';
+import 'package:depomla/pages/listing_page/listings_details_page.dart';
 import 'package:depomla/providers/user_provider.dart';
 import 'package:depomla/services/auth_service.dart';
 import 'package:depomla/models/user_model.dart';
+import 'package:depomla/models/listing_model.dart';
 import 'package:depomla/ads/ad_container.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,7 @@ import 'package:provider/provider.dart';
 import '../../ads/banner_ad_example.dart';
 import '../auth_page/login_page.dart';
 import '../auth_page/post_login_page.dart';
+import '../comment_page/full_screen_image_page.dart'; // Tam ekran resim sayfası
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -34,6 +37,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _isUpdating = false;
   User? user;
+
+  List<Listing> myListings = []; // Kullanıcının ilanları
 
   @override
   void initState() {
@@ -53,6 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     } else {
       Provider.of<UserProvider>(context, listen: false).loadUserData();
+      fetchMyListings(); // Kullanıcı giriş yapmışsa ilanları çek
     }
   }
 
@@ -67,6 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  /// Profil fotoğrafını günceller
   Future<void> _updateProfilePhoto() async {
     final pickedFile =
         await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
@@ -90,10 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final uploadTask = await ref.putFile(file);
       final photoURL = await uploadTask.ref.getDownloadURL();
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'photoURL': photoURL,
       });
 
@@ -102,8 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final currentUserModel = userProvider.userModel;
 
       if (currentUserModel != null) {
-        userProvider
-            .updateUserModel(currentUserModel.copyWith(photoURL: photoURL));
+        userProvider.updateUserModel(currentUserModel.copyWith(photoURL: photoURL));
       } else {
         _showSnackBar('Kullanıcı bilgileri bulunamadı.');
       }
@@ -118,14 +121,57 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<int> _getUserListingsCount() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('listings')
-        .where('uid', isEqualTo: _auth.currentUser!.uid)
-        .get();
-    return snapshot.docs.length;
+  /// Kullanıcının ilanlarını çeker
+  Future<void> fetchMyListings() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('listings')
+          .where('userId', isEqualTo: user!.uid) // Doğru alan adı kullanıldı
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      setState(() {
+        myListings = snapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+      });
+    } catch (e) {
+      print('My Listings veri alınırken hata oluştu: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('İlanlar alınırken hata oluştu: $e')),
+      );
+    }
   }
 
+  /// Kullanıcının favori ilanlarını çeker
+  Future<List<Listing>> fetchMyFavorites() async {
+    List<Listing> favorites = [];
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('favorites')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      List<String> favoriteListingIds = snapshot.docs.map((doc) => doc.id).toList();
+
+      if (favoriteListingIds.isNotEmpty) {
+        final listingsSnapshot = await FirebaseFirestore.instance
+            .collection('listings')
+            .where(FieldPath.documentId, whereIn: favoriteListingIds)
+            .get();
+
+        favorites = listingsSnapshot.docs.map((doc) => Listing.fromDocument(doc)).toList();
+      }
+    } catch (e) {
+      print('My Favorites veri alınırken hata oluştu: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Favoriler alınırken hata oluştu: $e')),
+      );
+    }
+    return favorites;
+  }
+
+  /// Çıkış yapar
   void _logout() async {
     await _authService.signOut();
     Navigator.pushReplacement(
@@ -134,12 +180,14 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// SnackBar gösterir
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
+  /// Profil başlığını oluşturur
   Widget _buildProfileHeader(UserModel userModel) {
     return Stack(
       children: [
@@ -173,7 +221,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileInfo(UserModel userModel, String lastSignInDate) {
+  /// Profil bilgilerini oluşturur
+  Widget _buildProfileInfo(UserModel userModel) {
     return Column(
       children: [
         Text(
@@ -184,63 +233,53 @@ class _ProfilePageState extends State<ProfilePage> {
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           userModel.email,
           style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[700]),
         ),
         const SizedBox(height: 16),
-        Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildStatItem('İlanlar', myListings.length.toString(), Icons.list_alt),
+            const SizedBox(width: 24),
+            _buildStatItem('Puan', '4.5⭐️', Icons.star),
+            const SizedBox(width: 24),
+            _buildStatItem('Yorum', '16+💬', Icons.chat_bubble),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// İstatistik öğelerini oluşturur
+  Widget _buildStatItem(String label, String count, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: const Color(0xFF4A90E2), size: 28),
+        const SizedBox(height: 4),
+        Text(
+          count,
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
-          child: ListTile(
-            leading: const Icon(Icons.access_time, color: Color(0xFF4A90E2)),
-            title: const Text('Son Giriş'),
-            subtitle: Text(lastSignInDate),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey[700],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(
-      String title, String count, IconData icon, Color color) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        width: 140,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 30),
-            const SizedBox(height: 8),
-            Text(
-              count,
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.grey[700],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  /// Navigasyon butonlarını oluşturur
   Widget _buildNavigationButtons() {
     return Column(
       children: [
@@ -280,6 +319,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+
+   
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -311,39 +353,26 @@ class _ProfilePageState extends State<ProfilePage> {
             return const Center(child: Text('Kullanıcı bilgileri alınamadı.'));
           }
 
-          String lastSignInDate = userModel.lastSignIn != null
-              ? DateFormat('dd MMM yyyy HH:mm')
-                  .format(userModel.lastSignIn!.toDate())
-              : 'Bilgi bulunamadı';
-
           return Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _buildProfileHeader(userModel),
-                    const SizedBox(height: 24),
-
-                    _buildProfileInfo(userModel, lastSignInDate),
-                    const SizedBox(height: 24),
-
-                    const SizedBox(height: 24),
-
+                    const SizedBox(height: 26),
+                    _buildProfileInfo(userModel),
+                    const SizedBox(height: 14),
                     _buildNavigationButtons(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
                     const AdContainer(),
-
-
-
-                    // Reklamları sayfanın uygun bir yerine yerleştirdik
                   ],
                 ),
               ),
               if (_isUpdating)
                 Container(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withOpacity(0.3),
                   child: const Center(child: CircularProgressIndicator()),
                 ),
             ],

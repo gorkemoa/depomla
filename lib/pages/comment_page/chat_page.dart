@@ -1,20 +1,25 @@
 // lib/pages/comment_page/chat_page.dart
 
+import 'package:depomla/pages/profil_page/user_profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/listing_model.dart';
 import 'package:intl/intl.dart';
-import '../../models/user_model.dart';
-import '../listing_page/listings_details_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../models/listing_model.dart';
+import '../../models/user_model.dart';
+import '../listing_page/listing_picker_bottom_sheet.dart';
+import '../listing_page/listings_details_page.dart';
+import '../profil_page/profile_page.dart'; // Doğru dosya yolunu kullanın
 
 class ChatPage extends StatefulWidget {
   final String chatId;
   final Listing listing;
 
-  const ChatPage({Key? key, required this.chatId, required this.listing}) : super(key: key);
+  const ChatPage({Key? key, required this.chatId, required this.listing})
+      : super(key: key);
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -25,12 +30,14 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  /// Diğer kullanıcının bilgileri
   String otherUserName = 'Sohbet';
   String otherUserPhotoUrl = '';
-  String otherUserId = ''; // Diğer kullanıcının ID'si
+  String otherUserId = '';
 
+  /// Performans amaçlı kullanıcıları ve ilanları tutmak için önbellek
   final Map<String, UserModel> _userCache = {};
-  final Map<String, Listing> _listingCache = {}; // İlan önbelleği
+  final Map<String, Listing> _listingCache = {};
 
   @override
   void initState() {
@@ -39,6 +46,7 @@ class _ChatPageState extends State<ChatPage> {
     _fetchOtherUserData();
   }
 
+  /// Gelen, okunmamış mesajları işaretler
   Future<void> _markMessagesAsRead() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -51,20 +59,22 @@ class _ChatPageState extends State<ChatPage> {
         .where('receiverId', isEqualTo: currentUser.uid)
         .get();
 
-    WriteBatch batch = _firestore.batch();
+    if (unreadMessages.docs.isEmpty) return;
 
+    WriteBatch batch = _firestore.batch();
     for (var doc in unreadMessages.docs) {
       batch.update(doc.reference, {'isRead': true});
     }
-
     await batch.commit();
   }
 
+  /// Sohbet ettiğimiz diğer kullanıcının verilerini çeker
   Future<void> _fetchOtherUserData() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final chatDoc = await _firestore.collection('chats').doc(widget.chatId).get();
+    DocumentSnapshot<Map<String, dynamic>> chatDoc =
+        await _firestore.collection('chats').doc(widget.chatId).get();
     if (!chatDoc.exists) return;
 
     List<dynamic> participants = chatDoc.data()?['participants'] ?? [];
@@ -72,36 +82,31 @@ class _ChatPageState extends State<ChatPage> {
       (id) => id != currentUser.uid,
       orElse: () => '',
     );
-
     if (fetchedOtherUserId.isEmpty) return;
 
-    try {
+    // Kullanıcı önbelleğimizde yoksa Firestore'dan çek
+    if (!_userCache.containsKey(fetchedOtherUserId)) {
       DocumentSnapshot<Map<String, dynamic>> userDoc =
           await _firestore.collection('users').doc(fetchedOtherUserId).get();
       if (userDoc.exists) {
         UserModel user = UserModel.fromDocument(userDoc);
-        setState(() {
-          otherUserId = fetchedOtherUserId;
-          otherUserName = user.displayName ?? 'Sohbet';
-          otherUserPhotoUrl = user.photoURL ?? '';
-          _userCache[otherUserId] = user;
-        });
-      } else {
-        setState(() {
-          otherUserName = 'Sohbet';
-        });
+        _userCache[fetchedOtherUserId] = user;
       }
-    } catch (e) {
-      print('Hata: $e');
+    }
+
+    final userData = _userCache[fetchedOtherUserId];
+    if (userData != null) {
       setState(() {
-        otherUserName = 'Sohbet';
+        otherUserId = fetchedOtherUserId;
+        otherUserName = userData.displayName ?? 'Sohbet';
+        otherUserPhotoUrl = userData.photoURL ?? '';
       });
     }
   }
 
+  /// Mesaj gönderme fonksiyonu: text veya listingId içererek gönderir
   Future<void> _sendMessage({String? listingId}) async {
     final currentUser = FirebaseAuth.instance.currentUser;
-
     if (currentUser == null) {
       _showSnackBar('Mesaj göndermek için giriş yapmalısınız.');
       return;
@@ -115,88 +120,57 @@ class _ChatPageState extends State<ChatPage> {
       'receiverId': otherUserId,
       'createdAt': FieldValue.serverTimestamp(),
       'isRead': false,
+      'type': listingId != null ? 'listing' : 'text',
     };
 
     if (listingId != null) {
-      messageData['type'] = 'listing';
       messageData['listingId'] = listingId;
     } else {
       messageData['text'] = text;
-      messageData['type'] = 'text';
     }
 
-    try {
-      await _firestore
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .add(messageData);
+    await _firestore
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .add(messageData);
 
-      await _firestore.collection('chats').doc(widget.chatId).update({
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'isHidden': false,
-      });
+    // Sohbet listesindeki son mesaj zamanını güncelle
+    await _firestore.collection('chats').doc(widget.chatId).update({
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'isHidden': false,
+    });
 
-      if (listingId == null) {
-        _messageController.clear();
-      }
-
-      _scrollToBottom();
-    } catch (e) {
-      print('Mesaj gönderilirken hata: $e');
-      _showSnackBar('Mesaj gönderilirken bir hata oluştu.');
+    if (listingId == null) {
+      _messageController.clear();
     }
+    _scrollToBottom();
   }
 
+  /// Yeni mesaj geldiğinde scroll'u en alta çekmek için
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0.0,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
     }
   }
 
+  /// İlgili ilanı önbellekten veya Firestore'dan getir
   Future<Listing?> _fetchListingById(String listingId) async {
     if (_listingCache.containsKey(listingId)) {
       return _listingCache[listingId];
     }
-
-    try {
-      DocumentSnapshot<Map<String, dynamic>> doc =
-          await _firestore.collection('listings').doc(listingId).get();
-      if (doc.exists) {
-        Listing listing = Listing.fromDocument(doc);
-        _listingCache[listingId] = listing;
-        return listing;
-      }
-      return null;
-    } catch (e) {
-      print('İlan getirirken hata: $e');
-      return null;
+    DocumentSnapshot<Map<String, dynamic>> doc =
+        await _firestore.collection('listings').doc(listingId).get();
+    if (doc.exists) {
+      Listing listing = Listing.fromDocument(doc);
+      _listingCache[listingId] = listing;
+      return listing;
     }
-  }
-
-  Future<UserModel?> getUserModelById(String userId) async {
-    if (_userCache.containsKey(userId)) {
-      return _userCache[userId];
-    }
-
-    try {
-      DocumentSnapshot<Map<String, dynamic>> doc =
-          await FirebaseFirestore.instance.collection('users').doc(userId).get();
-      if (doc.exists) {
-        UserModel user = UserModel.fromDocument(doc);
-        _userCache[userId] = user;
-        return user;
-      } else {
-        return null;
-      }
-    } catch (e) {
-      print('Hata: $e');
-      return null;
-    }
+    return null;
   }
 
   @override
@@ -212,6 +186,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// Mesaj listesi: metin ve ilan tipinde mesajları gösterir
   Widget _buildMessagesList() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _firestore
@@ -224,251 +199,230 @@ class _ChatPageState extends State<ChatPage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Mesajlar yüklenirken hata oluştu.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('Henüz mesaj yok.'));
+
+        final messages = snapshot.data?.docs ?? [];
+        if (messages.isEmpty) {
+          return const Center(child: Text('Mesaj bulunmuyor.'));
         }
 
-        final messages = snapshot.data!.docs;
-
-        return ListView.separated(
+        return ListView.builder(
           controller: _scrollController,
           reverse: true,
           padding: const EdgeInsets.all(10.0),
-          separatorBuilder: (context, index) => const SizedBox(height: 10),
           itemCount: messages.length,
           itemBuilder: (context, index) {
-            final messageData = messages[index].data();
-            final isMe = messageData['senderId'] == FirebaseAuth.instance.currentUser?.uid;
-            final createdAt = (messageData['createdAt'] as Timestamp?)?.toDate();
-            final timeString = createdAt != null ? DateFormat('HH:mm').format(createdAt) : '';
+            final data = messages[index].data();
+            final isMe =
+                data['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+            final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+            final timeString =
+                createdAt != null ? DateFormat('HH:mm').format(createdAt) : '';
 
-            Widget messageBubble;
-
-            if (messageData['type'] == 'listing' && messageData['listingId'] != null) {
-              String listingId = messageData['listingId'];
-              final listing = _listingCache[listingId];
-
-              if (listing != null) {
-                // İlan verisi önbellekte mevcut
-                messageBubble = _buildListingMessageBubble(listing, isMe, timeString);
-              } else {
-                // İlan verisi önbellekte yok, çekmeye çalış
-                _fetchListingById(listingId).then((fetchedListing) {
-                  if (fetchedListing != null) {
-                    setState(() {}); // Önbelleğe alındıktan sonra yeniden render et
-                  }
-                });
-
-                // Placeholder göster
-                messageBubble = Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isMe ? Colors.blueAccent : Colors.grey[300],
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(12),
-                      topRight: const Radius.circular(12),
-                      bottomLeft: Radius.circular(isMe ? 12 : 0),
-                      bottomRight: Radius.circular(isMe ? 0 : 12),
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'İlan yükleniyor...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+            if (data['type'] == 'listing' && data['listingId'] != null) {
+              final listingId = data['listingId'] as String;
+              final cachedListing = _listingCache[listingId];
+              if (cachedListing != null) {
+                return Align(
+                  alignment:
+                      isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: _buildListingMessageBubble(
+                    cachedListing,
+                    isMe,
+                    timeString,
                   ),
                 );
+              } else {
+                // Arka planda ilan bilgisi çekilsin
+                _fetchListingById(listingId).then((fetchedListing) {
+                  if (fetchedListing != null) {
+                    setState(() {}); // Önbelleğe alındıktan sonra yeniden çiz
+                  }
+                });
+                // Yükleme göstergesi yerine boş bir widget göster
+                return SizedBox.shrink();
               }
             } else {
               // Normal metin mesajı
-              messageBubble = Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.7,
-                ),
-                decoration: BoxDecoration(
-                  color: isMe ? Colors.blueAccent : Colors.grey[300],
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(12),
-                    topRight: const Radius.circular(12),
-                    bottomLeft: Radius.circular(isMe ? 12 : 0),
-                    bottomRight: Radius.circular(isMe ? 0 : 12),
+              return Align(
+                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                child: InkWell(
+                  onTap: () {
+                    // Mesaja tıklanınca kullanıcı profiline git
+                    if (otherUserId.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              UserProfilePage(user: _userCache[otherUserId]!),
+                        ),
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    margin: const EdgeInsets.symmetric(vertical: 3),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.blueAccent : Colors.grey[300],
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(12),
+                        topRight: const Radius.circular(12),
+                        bottomLeft: Radius.circular(isMe ? 12 : 0),
+                        bottomRight: Radius.circular(isMe ? 0 : 12),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: isMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data['text'] ?? '',
+                          style: TextStyle(
+                            color: isMe ? Colors.white : Colors.black87,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          timeString,
+                          style: TextStyle(
+                            color: isMe ? Colors.white70 : Colors.black54,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment:
-                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      messageData['text'] ?? '',
-                      style: TextStyle(
-                        color: isMe ? Colors.white : Colors.black87,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      timeString,
-                      style: TextStyle(
-                        color: isMe ? Colors.white70 : Colors.black54,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
               );
             }
-
-            // İlk mesajın bir ilan olup olmadığını kontrol et
-            if (index == 0 && messageData['type'] == 'listing') {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10.0),
-                child: Column(
-                  crossAxisAlignment:
-                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    messageBubble,
-                    const SizedBox(height: 4),
-                    Text(
-                      'İlan gönderildi',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return Align(
-              alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-              child: messageBubble,
-            );
           },
         );
       },
     );
   }
 
-  Widget _buildListingMessageBubble(Listing listing, bool isMe, String timeString) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.7,
-      ),
-      decoration: BoxDecoration(
-        color: isMe ? Colors.blueAccent : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
+  /// Bir mesajın ilan içeren balonu
+  Widget _buildListingMessageBubble(
+    Listing listing,
+    bool isMe,
+    String timeString,
+  ) {
+    return InkWell(
+      onTap: () {
+        // Hem resme hem de yazıya tıklanınca ilan detay sayfasına git
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListingDetailPage(listing: listing),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: listing.imageUrl.first,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blueAccent : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: listing.imageUrl.first,
                     width: 60,
                     height: 60,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, color: Colors.white70),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.broken_image, color: Colors.white70),
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey.shade300,
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.broken_image),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      listing.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isMe ? Colors.white : Colors.black87,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: isMe
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        listing.title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isMe ? Colors.white : Colors.black87,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${listing.price.toStringAsFixed(2)} ₺',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.green,
+                      const SizedBox(height: 5),
+                      Text(
+                        '${listing.price.toStringAsFixed(2)} ₺',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.green,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Align(
-            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-            child: Text(
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
               timeString,
               style: TextStyle(
                 color: isMe ? Colors.white70 : Colors.black54,
                 fontSize: 12,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  /// Kullanıcının kendi ilanlarını seçerek paylaşmasını sağlayan bottom sheet'i açar
   void _openListingPicker() async {
     final selectedListing = await showModalBottomSheet<Listing>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const ListingPickerBottomSheet(),
+      builder: (_) => const ListingPickerBottomSheet(),
     );
-
     if (selectedListing != null) {
       _sendMessage(listingId: selectedListing.id);
     }
   }
 
+  /// Mesaj yazma ve gönderme alanı
   Widget _buildMessageInput() {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.insert_drive_file, color: Colors.blueAccent),
+              icon:
+                  const Icon(Icons.insert_drive_file, color: Colors.blueAccent),
               onPressed: _openListingPicker,
             ),
             Expanded(
@@ -480,12 +434,13 @@ class _ChatPageState extends State<ChatPage> {
                 child: TextField(
                   controller: _messageController,
                   style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Mesaj yazın...',
                     border: InputBorder.none,
                     contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
                   ),
+                  onSubmitted: (_) => _sendMessage(),
                 ),
               ),
             ),
@@ -502,6 +457,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// Başlık kısmında ilgili ilanın fotoğrafı ve bilgileri
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -509,10 +465,11 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           GestureDetector(
             onTap: () {
+              // İlana tıklayınca detay sayfasını aç
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ListingDetailPage(listing: widget.listing),
+                  builder: (_) => ListingDetailPage(listing: widget.listing),
                 ),
               );
             },
@@ -523,41 +480,51 @@ class _ChatPageState extends State<ChatPage> {
                 width: 40,
                 height: 40,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
+                placeholder: (_, __) => Container(
                   width: 40,
                   height: 40,
                   color: Colors.grey.shade300,
-                  child: const Icon(Icons.image, color: Colors.white70),
                 ),
-                errorWidget: (context, url, error) => Container(
+                errorWidget: (_, __, ___) => Container(
                   width: 40,
                   height: 40,
                   color: Colors.grey.shade300,
-                  child: const Icon(Icons.broken_image, color: Colors.white70),
+                  child: const Icon(Icons.broken_image),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.listing.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            child: InkWell(
+              onTap: () {
+                // İlana veya yazıya tıklanınca detay sayfasını aç
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ListingDetailPage(listing: widget.listing),
                   ),
-                ),
-                Text(
-                  '${widget.listing.price.toStringAsFixed(2)} ₺',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.green,
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.listing.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                  Text(
+                    '${widget.listing.price.toStringAsFixed(2)} ₺',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -565,13 +532,12 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// Ana gövde: üstte ilan bilgisi, ortada mesajlar, altta mesaj gönderme kutusu
   Widget _buildBody() {
     return Column(
       children: [
         _buildHeader(),
-        Expanded(
-          child: _buildMessagesList(),
-        ),
+        Expanded(child: _buildMessagesList()),
         _buildMessageInput(),
       ],
     );
@@ -582,175 +548,54 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         title: Row(
           children: [
-            if (otherUserPhotoUrl.isNotEmpty)
-              CircleAvatar(
-                backgroundImage: CachedNetworkImageProvider(otherUserPhotoUrl),
-              )
-            else
-              const CircleAvatar(
-                backgroundImage: AssetImage('assets/default_avatar.png'),
+            // Kullanıcının profil fotoğrafı
+            GestureDetector(
+              onTap: () {
+                if (otherUserId.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          UserProfilePage(user: _userCache[otherUserId]!),
+                    ),
+                  );
+                }
+              },
+              child: CircleAvatar(
+                backgroundImage: otherUserPhotoUrl.isNotEmpty
+                    ? CachedNetworkImageProvider(otherUserPhotoUrl)
+                    : const AssetImage('assets/default_avatar.png')
+                        as ImageProvider,
               ),
+            ),
             const SizedBox(width: 10),
-            Text(
-              otherUserName,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                if (otherUserId.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          UserProfilePage(user: _userCache[otherUserId]!),
+                    ),
+                  );
+                }
+              },
+              child: Text(
+                otherUserName,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        backgroundColor: Colors.blueAccent,
-        elevation: 0,
       ),
       body: _buildBody(),
-    );
-  }
-}
-
-class ListingPickerBottomSheet extends StatelessWidget {
-  const ListingPickerBottomSheet({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      return Container(
-        height: 200,
-        color: Colors.white,
-        child: const Center(
-          child: Text('Giriş yapmanız gerekiyor.', style: TextStyle(fontSize: 16)),
-        ),
-      );
-    }
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const Text(
-            'Kendi İlanlarınızı Seçin',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('listings')
-                  .where('userId', isEqualTo: currentUser.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return const Center(child: Text('İlanlar yüklenirken hata oluştu.'));
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('Henüz kendi ilanınız yok.'));
-                }
-
-                final listings = snapshot.data!.docs
-                    .map((doc) => Listing.fromDocument(doc))
-                    .toList();
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.7,
-                  ),
-                  itemCount: listings.length,
-                  itemBuilder: (context, index) {
-                    final listing = listings[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pop(listing);
-                      },
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                child: CachedNetworkImage(
-                                  imageUrl: listing.imageUrl.first,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Center(
-                                      child: Icon(Icons.image, color: Colors.white70, size: 40),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Center(
-                                      child: Icon(Icons.broken_image, color: Colors.white70, size: 40),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Text(
-                                listing.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Text(
-                                '${listing.price.toStringAsFixed(2)} ₺',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

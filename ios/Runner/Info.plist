@@ -32,6 +32,16 @@
 				<string>com.googleusercontent.apps.30104908258-5lfq2uu2r2ngcu48sedsi05h823upv8m</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.30104908258-6c34u51voeb64vadk8b11qv2a8fgvs50</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
@@ -72,7 +82,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -100,14 +109,5 @@
 		<key>UIUserNotificationTypeSound</key>
 		<true/>
 	</dict>
-	<key>UIBackgroundModes</key>
-<array>
-    <string>remote-notification</string>
-</array>
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-</dict>
 </dict>
 </plist>

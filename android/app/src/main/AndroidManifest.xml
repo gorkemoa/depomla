@@ -9,20 +9,22 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:label="Depomla"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:theme="@style/NormalTheme"
-        android:usesCleartextTraffic="true" 
+        android:usesCleartextTraffic="true"
         android:name="${applicationName}">
-
+        <meta-data
+            android:name="com.google.firebase.database"
+            android:value="true" />
         <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-7601198457132530~4713836906"/>
+            android:value="ca-app-pub-7601198457132530~4713836906" />
 
         <activity
             android:name=".MainActivity"

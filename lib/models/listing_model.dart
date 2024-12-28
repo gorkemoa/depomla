@@ -1,41 +1,39 @@
+// lib/models/listing_model.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-/// Enum representing the type of listing
-enum ListingType { deposit, storage } // Burada tanımlı
+enum ListingType { deposit, storage }
 
-
-/// Model class representing a listing
 class Listing {
   final String id;
   final String title;
   final String description;
   final double price;
-  final List<String> imageUrl; // Supports multiple images
+  final List<String> imageUrl;
   final String userId;
   final Timestamp createdAt;
   final ListingType listingType;
-  final double? size; // Storage size in square meters
-  final String? city; // City ID
-  final String? district; // District ID
-  final String? neighborhood; // Neighborhood ID
-  final String? storageType; // Type of storage (e.g., Indoor, Outdoor)
-  final Map<String, bool> features; // Security features
-  final DateTime? startDate; // Storage start date
-  final DateTime? endDate; // Storage end date
+  final double? size;
+  final String? city;
+  final String? district;
+  final String? neighborhood;
+  final String? storageType;
+  final Map<String, bool> features;
+  final DateTime? startDate;
+  final DateTime? endDate;
   bool isFavorite;
-  // New fields for detailed item information
-  final String? itemType; // Type of item (e.g., Motorcycle, Furniture)
-  final Map<String, double>? itemDimensions; // Dimensions: length, width, height in meters
-  final double? itemWeight; // Weight in kg
-  final bool? requiresTemperatureControl; // Temperature-sensitive item
-  final bool? requiresDryEnvironment; // Requires dry environment (e.g., for electronics)
-  final bool? insuranceRequired; // Does the item require insurance?
-  final List<String>? prohibitedConditions; // Prohibited conditions for the item
-  final bool? ownerPickup; // Will the owner pick up the item from the user?
-  final String? deliveryDetails; // Responsibility for item delivery
-  final String? additionalNotes; // Additional notes or requirements
-  final List<String>? preferredFeatures; // Features the user is looking for (e.g., secure, covered space)
+  final String? itemType;
+  final Map<String, double>? itemDimensions;
+  final double? itemWeight;
+  final bool? requiresTemperatureControl;
+  final bool? requiresDryEnvironment;
+  final bool? insuranceRequired;
+  final List<String>? prohibitedConditions;
+  final bool? ownerPickup;
+  final String? deliveryDetails;
+  final String? additionalNotes;
+  final List<String>? preferredFeatures;
 
   Listing({
     required this.id,
@@ -54,7 +52,6 @@ class Listing {
     this.features = const {},
     this.startDate,
     this.endDate,
-    // New fields
     this.itemType,
     this.itemDimensions,
     this.itemWeight,
@@ -67,26 +64,11 @@ class Listing {
     this.additionalNotes,
     this.preferredFeatures,
     this.isFavorite = false,
-
   });
 
-   factory Listing.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
+  // Firestore için
+  factory Listing.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
-
-    // Yardımcı fonksiyon: Tarihi parse eder
-    DateTime? parseDate(dynamic date) {
-      if (date is Timestamp) {
-        return date.toDate();
-      } else if (date is String) {
-        try {
-          return DateFormat('dd/MM/yyyy').parse(date);
-        } catch (e) {
-          print('Tarih parse edilirken hata: $e');
-        }
-      }
-      return null;
-    }
-
     List<String> imageUrls;
     if (data['imageUrl'] is List) {
       imageUrls = List<String>.from(data['imageUrl'] as List<dynamic>);
@@ -115,9 +97,8 @@ class Listing {
       features: data['features'] != null
           ? Map<String, bool>.from(data['features'] as Map<dynamic, dynamic>)
           : {},
-
-     startDate: data['startDate'] != null ? parseDate(data['startDate']) : null,
-      endDate: data['endDate'] != null ? parseDate(data['endDate']) : null,
+      startDate: data['startDate'] != null ? Listing.parseDate(data['startDate']) : null,
+      endDate: data['endDate'] != null ? Listing.parseDate(data['endDate']) : null,
       itemType: data['itemType']?.toString(),
       itemDimensions: data['itemDimensions'] != null
           ? Map<String, double>.from(
@@ -139,7 +120,85 @@ class Listing {
     );
   }
 
-  /// Converts the Listing instance to a map for Firestore
+  static DateTime? parseDate(dynamic date) {
+    if (date is Timestamp) {
+      return date.toDate();
+    } else if (date is String) {
+      try {
+        return DateFormat('dd/MM/yyyy').parse(date);
+      } catch (e) {
+        print('Tarih parse edilirken hata: $e');
+      }
+    }
+    return null;
+  }
+
+  // Realtime Database için
+  factory Listing.fromMap(Map<dynamic, dynamic> map, String id) {
+    List<String> imageUrls;
+    if (map['imageUrl'] is List) {
+      imageUrls = List<String>.from(map['imageUrl'] as List<dynamic>);
+    } else if (map['imageUrl'] is String) {
+      imageUrls = [map['imageUrl'] as String];
+    } else {
+      imageUrls = [];
+    }
+
+    DateTime? parseDate(dynamic date) {
+      if (date is Timestamp) {
+        return date.toDate();
+      } else if (date is String) {
+        try {
+          return DateFormat('dd/MM/yyyy').parse(date);
+        } catch (e) {
+          print('Tarih parse edilirken hata: $e');
+        }
+      }
+      return null;
+    }
+
+    return Listing(
+      id: id,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] as num).toDouble(),
+      imageUrl: imageUrls,
+      userId: map['userId'] ?? '',
+      createdAt: map['createdAt'] ?? Timestamp.now(),
+      listingType: map['listingType'] == 'deposit'
+          ? ListingType.deposit
+          : ListingType.storage,
+      size: (map['size'] as num?)?.toDouble(),
+      city: map['city']?.toString(),
+      district: map['district']?.toString(),
+      neighborhood: map['neighborhood']?.toString(),
+      storageType: map['storageType']?.toString(),
+      features: map['features'] != null
+          ? Map<String, bool>.from(map['features'] as Map<dynamic, dynamic>)
+          : {},
+      startDate: map['startDate'] != null ? parseDate(map['startDate']) : null,
+      endDate: map['endDate'] != null ? parseDate(map['endDate']) : null,
+      itemType: map['itemType']?.toString(),
+      itemDimensions: map['itemDimensions'] != null
+          ? Map<String, double>.from(
+              map['itemDimensions'] as Map<dynamic, dynamic>)
+          : null,
+      itemWeight: (map['itemWeight'] as num?)?.toDouble(),
+      requiresTemperatureControl: map['requiresTemperatureControl'] as bool?,
+      requiresDryEnvironment: map['requiresDryEnvironment'] as bool?,
+      insuranceRequired: map['insuranceRequired'] as bool?,
+      prohibitedConditions: map['prohibitedConditions'] != null
+          ? List<String>.from(map['prohibitedConditions'] as List<dynamic>)
+          : null,
+      ownerPickup: map['ownerPickup'] as bool?,
+      deliveryDetails: map['deliveryDetails']?.toString(),
+      additionalNotes: map['additionalNotes']?.toString(),
+      preferredFeatures: map['preferredFeatures'] != null
+          ? List<String>.from(map['preferredFeatures'] as List<dynamic>)
+          : null,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -171,7 +230,6 @@ class Listing {
     };
   }
 
-  /// Creates a copy of the Listing with updated fields
   Listing copyWith({
     String? id,
     String? title,
@@ -189,7 +247,6 @@ class Listing {
     Map<String, bool>? features,
     DateTime? startDate,
     DateTime? endDate,
-    // New fields
     String? itemType,
     Map<String, double>? itemDimensions,
     double? itemWeight,
@@ -235,4 +292,19 @@ class Listing {
       preferredFeatures: preferredFeatures ?? this.preferredFeatures,
     );
   }
+factory Listing.fromRTDB(Map<dynamic, dynamic> map, String id) {
+    final images = map['imageUrl'] as List? ?? [];
+    return Listing(
+      id: id,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      imageUrl: images.map((e) => e.toString()).toList(),
+      userId: map['userId'] ?? '',
+      createdAt: map['createdAt'] ?? Timestamp.now(),
+      listingType: map['listingType'] == 'deposit'
+          ? ListingType.deposit
+          : ListingType.storage,
+    );
+}
 }

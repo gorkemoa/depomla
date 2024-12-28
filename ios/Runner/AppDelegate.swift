@@ -9,7 +9,6 @@ import UserNotifications // Bildirimler için gerekli
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Firebase'i başlat
     FirebaseApp.configure()
     
     // FCM token'ını al

@@ -2,7 +2,6 @@ import 'package:depomla/models/listing_model.dart';
 import 'package:flutter/material.dart';
 import '../home_page.dart';
 import 'login_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
@@ -119,7 +118,6 @@ class _PostLoginPageState extends State<PostLoginPage>
     );
   }
 
-  /// ----------- TOP BANNER -----------
   Widget _buildTopBanner(
       bool isUserLoggedIn, UserProvider userProvider) {
     final username = isUserLoggedIn
@@ -128,8 +126,6 @@ class _PostLoginPageState extends State<PostLoginPage>
 
     return Column(
       children: [
-        // White top section
-        // Blue gradient banner
         AnimatedBuilder(
           animation: _alignmentAnimation,
           builder: (context, child) {
@@ -213,7 +209,6 @@ class _PostLoginPageState extends State<PostLoginPage>
     );
   }
 
-  /// ----------- CAROUSEL SLIDER -----------
   Widget _buildCarouselSlider() {
     return CarouselSlider(
       options: CarouselOptions(

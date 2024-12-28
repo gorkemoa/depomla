@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:depomla/firebase_options.dart';
 import 'package:depomla/models/listing_model.dart';
 import 'package:depomla/models/user_model.dart';
 import 'package:depomla/notifications_page.dart';
@@ -17,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'services/notification_service.dart'; // Bildirim servisini içe aktar
 
@@ -35,10 +37,12 @@ class Routes {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  MobileAds.instance.initialize();
   // Firebase başlatılması
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     // Firebase başlatma hatasını ele alın
     print('Firebase başlatma hatası: $e');
@@ -62,7 +66,6 @@ Future<void> main() async {
           initialData: null,
           catchError: (context, error) => null,
         ),
-        // Diğer sağlayıcılar...
       ],
       child: const DepomlaApp(),
     ),
@@ -73,9 +76,7 @@ Future<void> main() async {
 Future selectNotification(NotificationResponse notificationResponse) async {
   final String? payload = notificationResponse.payload;
   if (payload != null) {
-    // ChatPage'e yönlendirme işlemi burada hallediliyor.
-    // Ancak bu işlev NotificationService içinde zaten ele alınıyor.
-    // Dolayısıyla burada ekstra bir işlem yapmanıza gerek yok.
+    //  bu işlev NotificationService içinde zaten ele alınıyor.
   }
 }
 
@@ -90,17 +91,18 @@ class _DepomlaAppState extends State<DepomlaApp> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _chatsSubscription;
-  final Map<String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>> _messagesSubscriptions = {};
+  final Map<String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
+      _messagesSubscriptions = {};
 
   @override
   void initState() {
     super.initState();
-    // Kullanıcı oturum açtığında mesajları dinlemeye başla
+    // Kullanıcı oturum açtığında mesajları okumaya başlar
     _auth.authStateChanges().listen((User? user) {
       if (user != null) {
         _listenToNewMessages(user.uid);
       } else {
-        // Kullanıcı çıkış yaptığında tüm dinleyicileri iptal et
+        // Kullanıcı çıkış yaptığında tüm okumaları iptal et
         _messagesSubscriptions.forEach((chatId, subscription) {
           subscription.cancel();
         });
@@ -119,7 +121,7 @@ class _DepomlaAppState extends State<DepomlaApp> {
       for (var chatDoc in chatSnapshot.docs) {
         final chatId = chatDoc.id;
 
-        // Eğer daha önce dinlenmeyen bir sohbetse, dinleyici ekle
+        //  daha önce sohbet edilmediyse bir sohbetse, sohbet ekle
         if (!_messagesSubscriptions.containsKey(chatId)) {
           _messagesSubscriptions[chatId] = _firestore
               .collection('chats')
@@ -139,7 +141,11 @@ class _DepomlaAppState extends State<DepomlaApp> {
               // Kendi gönderdiğiniz mesajları bildirimde göstermeyin
               if (senderId != userId && receiverId == userId && !isRead) {
                 // Kullanıcı bilgilerini al
-                _firestore.collection('users').doc(senderId).get().then((userDoc) {
+                _firestore
+                    .collection('users')
+                    .doc(senderId)
+                    .get()
+                    .then((userDoc) {
                   if (userDoc.exists) {
                     final user = UserModel.fromDocument(userDoc);
                     final senderName = user.displayName ?? 'Yeni Mesaj';
@@ -203,7 +209,6 @@ class _DepomlaAppState extends State<DepomlaApp> {
             },
           );
         }
-        // Diğer özel route tanımlamaları
         return null;
       },
       onUnknownRoute: (settings) {
@@ -216,14 +221,6 @@ class _DepomlaAppState extends State<DepomlaApp> {
               child: Text('Bu sayfa bulunamadı.'),
             ),
           ),
-        );
-      },
-      builder: (context, child) {
-        return Stack(
-          children: [
-            child!,
-            // Örneğin, banner reklam eklemek için aşağıdaki widget'ı kullanabilirsiniz
-          ],
         );
       },
     );
